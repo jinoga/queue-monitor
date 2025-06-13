@@ -1,0 +1,32 @@
+{
+  "name": "queue-monitor-online",
+  "version": "1.0.0",
+  "description": "ระบบติดตามคิวสำนักงานที่ดิน - แจ้งเตือนคิว + สถานะช่องบริการ",
+  "main": "server-simple.js",
+  "scripts": {
+    "start": "node server-simple.js",
+    "dev": "nodemon server-simple.js"
+  },
+  "keywords": [
+    "queue",
+    "notification", 
+    "counter-status",
+    "land-office",
+    "thailand"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
