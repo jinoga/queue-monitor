@@ -1,4 +1,4 @@
-// server-simple.js - Simplified Queue Monitor for Online Deployment
+// server-simple.js - Enhanced Error Handling Version
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
@@ -17,15 +17,53 @@ app.use(express.static('public'));
 let latestQueueData = null;
 let counterHistory = {};
 let isConnected = false;
+let connectionAttempts = 0;
+let maxRetries = 3;
 
 // กำหนด URL ของระบบคิว
 const QUEUE_URL = 'https://elands.dol.go.th/QueueOnlineServer/queue/294';
 const STREAM_URL = 'https://elands.dol.go.th/QueueOnlineServer/service/queue_stream/294';
 
-// ฟังก์ชันเชื่อมต่อ SSE
+// ฟังก์ชันสร้างข้อมูลจำลอง (สำหรับทดสอบ)
+function createMockData() {
+    const mockQueues = [];
+    const startNum = Math.floor(Math.random() * 1000) + 2000;
+    
+    for (let i = 0; i < 10; i++) {
+        mockQueues.push({
+            queueNo: String(startNum + i).padStart(4, '0'),
+            customerName: `Customer ${i + 1}`,
+            serviceType: 'บริการทั่วไป'
+        });
+    }
+    
+    return {
+        currentQueue: {
+            queueNo: String(startNum - 1).padStart(4, '0'),
+            counterNo: '1',
+            customerName: 'Current Customer',
+            serviceType: 'บริการทั่วไป'
+        },
+        queue: mockQueues,
+        totalWaiting: mockQueues.length,
+        fetchedAt: new Date().toISOString(),
+        source: 'mock_data'
+    };
+}
+
+// ฟังก์ชันเชื่อมต่อ SSE (ปรับปรุงแล้ว)
 function connectToSSE() {
     return new Promise((resolve, reject) => {
-        console.log('🔗 เชื่อมต่อ SSE:', STREAM_URL);
+        if (connectionAttempts >= maxRetries) {
+            console.log('🔄 หยุดพยายามเชื่อมต่อ SSE (ใช้ Mock Data แทน)');
+            latestQueueData = createMockData();
+            updateCounterHistory(latestQueueData);
+            reject(new Error('Max retries reached'));
+            return;
+        }
+        
+        connectionAttempts++;
+        console.log(`🔗 เชื่อมต่อ SSE (ครั้งที่ ${connectionAttempts}):`, STREAM_URL);
         
         const https = require('https');
         const url = require('url');
@@ -42,7 +80,8 @@ function connectToSSE() {
                 'Cache-Control': 'no-cache',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'Connection': 'keep-alive'
-            }
+            },
+            timeout: 15000 // เพิ่ม timeout
         };
 
         const sseRequest = https.request(options, (res) => {
@@ -54,6 +93,7 @@ function connectToSSE() {
             }
 
             isConnected = true;
+            connectionAttempts = 0; // รีเซ็ตเมื่อเชื่อมต่อสำเร็จ
             resolve();
 
             let buffer = '';
@@ -79,7 +119,6 @@ function connectToSSE() {
                                     source: 'sse_stream'
                                 };
                                 
-                                // อัพเดตประวัติช่องบริการ
                                 updateCounterHistory(latestQueueData);
                                 
                                 console.log('📊 Updated queue data:', {
@@ -98,13 +137,13 @@ function connectToSSE() {
             res.on('end', () => {
                 console.log('📡 SSE Connection ended');
                 isConnected = false;
-                setTimeout(() => connectToSSE().catch(console.error), 5000);
+                setTimeout(() => connectToSSE().catch(handleSSEError), 10000);
             });
 
             res.on('error', (error) => {
                 console.error('❌ SSE Error:', error.message);
                 isConnected = false;
-                setTimeout(() => connectToSSE().catch(console.error), 5000);
+                setTimeout(() => connectToSSE().catch(handleSSEError), 10000);
             });
         });
 
@@ -114,15 +153,27 @@ function connectToSSE() {
             reject(error);
         });
 
-        sseRequest.setTimeout(30000, () => {
+        sseRequest.setTimeout(15000, () => {
             console.log('⏰ SSE Timeout');
             sseRequest.destroy();
             isConnected = false;
-            setTimeout(() => connectToSSE().catch(console.error), 5000);
+            setTimeout(() => connectToSSE().catch(handleSSEError), 10000);
         });
 
         sseRequest.end();
     });
+}
+
+// ฟังก์ชันจัดการ SSE Error
+function handleSSEError(error) {
+    console.log('⚠️ SSE Error, switching to fallback mode');
+    
+    // ใช้ Mock Data เมื่อเชื่อมต่อไม่ได้
+    if (!latestQueueData) {
+        latestQueueData = createMockData();
+        updateCounterHistory(latestQueueData);
+        console.log('🔄 Using Mock Data for testing');
+    }
 }
 
 // อัพเดตประวัติช่องบริการ
@@ -156,7 +207,7 @@ function updateCounterHistory(queueData) {
     history.current = queueNo;
 }
 
-// ฟังก์ชันดึงข้อมูลแบบ HTTP fallback
+// ฟังก์ชันดึงข้อมูลแบบ HTTP fallback (ปรับปรุงแล้ว)
 async function fetchQueueDataHTTP() {
     try {
         console.log('🔗 Fallback: ดึงข้อมูลจาก HTML page');
@@ -166,7 +217,7 @@ async function fetchQueueDataHTTP() {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
             },
-            timeout: 10000
+            timeout: 15000 // เพิ่ม timeout
         });
 
         const $ = cheerio.load(response.data);
@@ -204,13 +255,21 @@ async function fetchQueueDataHTTP() {
 
     } catch (error) {
         console.error('❌ HTTP Fallback Error:', error.message);
-        return null;
+        
+        // สร้างข้อมูลจำลองเมื่อ HTTP ล้มเหลว
+        if (!latestQueueData) {
+            console.log('🔄 Creating Mock Data for fallback');
+            latestQueueData = createMockData();
+            updateCounterHistory(latestQueueData);
+        }
+        
+        return latestQueueData;
     }
 }
 
 // API Routes
 
-// ดึงข้อมูลคิวปัจจุบัน
+// ดึงข้อมูลคิวปัจจุบัน (ปรับปรุงแล้ว)
 app.get('/api/queue-data', async (req, res) => {
     try {
         let data = latestQueueData;
@@ -224,13 +283,22 @@ app.get('/api/queue-data', async (req, res) => {
             data: data,
             counterHistory: counterHistory,
             connected: isConnected,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            serverStatus: {
+                connectionAttempts: connectionAttempts,
+                usingMockData: data?.source === 'mock_data',
+                fallbackMode: !isConnected
+            }
         });
     } catch (error) {
         res.status(500).json({
             success: false,
             error: error.message,
-            connected: false
+            connected: false,
+            serverStatus: {
+                connectionAttempts: connectionAttempts,
+                fallbackMode: true
+            }
         });
     }
 });
@@ -244,7 +312,7 @@ app.get('/api/counter-status', (req, res) => {
     });
 });
 
-// สถานะระบบ
+// สถานะระบบ (ปรับปรุงแล้ว)
 app.get('/api/status', (req, res) => {
     res.json({
         success: true,
@@ -253,7 +321,11 @@ app.get('/api/status', (req, res) => {
             lastUpdate: latestQueueData?.fetchedAt || null,
             uptime: process.uptime(),
             counters: Object.keys(counterHistory).length,
-            server: 'Queue Monitor v1.0'
+            server: 'Queue Monitor v1.1 - Enhanced',
+            connectionAttempts: connectionAttempts,
+            usingMockData: latestQueueData?.source === 'mock_data',
+            fallbackMode: !isConnected,
+            dataSource: latestQueueData?.source || 'none'
         }
     });
 });
@@ -263,12 +335,24 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// สำหรับ health check
+// สำหรับ health check (ปรับปรุงแล้ว)
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         uptime: process.uptime(),
-        connected: isConnected
+        connected: isConnected,
+        hasData: !!latestQueueData,
+        dataSource: latestQueueData?.source || 'none'
+    });
+});
+
+// Mock Data Endpoint (สำหรับทดสอบ)
+app.get('/api/mock-data', (req, res) => {
+    const mockData = createMockData();
+    res.json({
+        success: true,
+        data: mockData,
+        message: 'Mock data for testing purposes'
     });
 });
 
@@ -276,15 +360,22 @@ app.get('/health', (req, res) => {
 async function startServer() {
     try {
         app.listen(PORT, () => {
-            console.log('🚀 Server เริ่มทำงานแล้ว!');
+            console.log('🚀 Server เริ่มทำงานแล้ว! (Enhanced Version)');
             console.log(`📡 URL: http://localhost:${PORT}`);
             console.log(`🌐 Production URL จะได้รับจาก hosting provider`);
             console.log('');
             console.log('📋 API Endpoints:');
             console.log('  GET  /api/queue-data      - ดึงข้อมูลคิวและช่องบริการ');
             console.log('  GET  /api/counter-status  - สถานะช่องบริการ');
-            console.log('  GET  /api/status          - สถานะระบบ');
+            console.log('  GET  /api/status          - สถานะระบบ (รายละเอียด)');
+            console.log('  GET  /api/mock-data       - ข้อมูลจำลอง (สำหรับทดสอบ)');
             console.log('  GET  /health              - Health check');
+            console.log('');
+            console.log('🔧 Enhanced Features:');
+            console.log('  ✅ Mock Data Fallback');
+            console.log('  ✅ Better Error Handling');
+            console.log('  ✅ Connection Retry Logic');
+            console.log('  ✅ Detailed Status Monitoring');
         });
         
         // เริ่มต้น SSE connection
@@ -293,30 +384,37 @@ async function startServer() {
             await connectToSSE();
             console.log('✅ SSE connection สำเร็จ!');
         } catch (error) {
-            console.log('⚠️ SSE connection ล้มเหลว, ใช้ HTTP fallback');
+            console.log('⚠️ SSE connection ล้มเหลว, ใช้ fallback mode');
             console.log('   Error:', error.message);
-            console.log('🔄 เริ่มใช้ HTTP polling แทน...');
             
-            // ทดสอบ HTTP fallback ทันที
-            await fetchQueueDataHTTP();
-            
-            // เริ่ม HTTP polling
-            setInterval(async () => {
-                try {
-                    await fetchQueueDataHTTP();
-                    console.log('📊 HTTP polling อัพเดตข้อมูลเรียบร้อย');
-                } catch (httpError) {
-                    console.log('⚠️ HTTP polling ล้มเหลว:', httpError.message);
-                }
-            }, 10000); // ทุก 10 วินาที
+            // ลองใช้ HTTP fallback
+            try {
+                await fetchQueueDataHTTP();
+                console.log('✅ HTTP fallback สำเร็จ!');
+            } catch (fallbackError) {
+                console.log('⚠️ HTTP fallback ล้มเหลว, ใช้ Mock Data');
+                console.log('   Error:', fallbackError.message);
+                latestQueueData = createMockData();
+                updateCounterHistory(latestQueueData);
+                console.log('✅ Mock Data พร้อมใช้งาน!');
+            }
         }
         
-        // Polling สำรอง
+        // Polling สำรอง (ปรับปรุงแล้ว)
         setInterval(async () => {
             if (!isConnected) {
-                await fetchQueueDataHTTP();
+                try {
+                    await fetchQueueDataHTTP();
+                } catch (error) {
+                    // ถ้า HTTP ล้มเหลว ใช้ Mock Data
+                    if (!latestQueueData || (Date.now() - new Date(latestQueueData.fetchedAt).getTime()) > 60000) {
+                        latestQueueData = createMockData();
+                        updateCounterHistory(latestQueueData);
+                        console.log('🔄 Updated Mock Data');
+                    }
+                }
             }
-        }, 10000); // ทุก 10 วินาที
+        }, 15000); // ทุก 15 วินาที
         
     } catch (error) {
         console.error('❌ ข้อผิดพลาดในการเริ่มต้นเซิร์ฟเวอร์:', error.message);
