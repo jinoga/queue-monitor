@@ -295,7 +295,20 @@ async function startServer() {
         } catch (error) {
             console.log('⚠️ SSE connection ล้มเหลว, ใช้ HTTP fallback');
             console.log('   Error:', error.message);
+            console.log('🔄 เริ่มใช้ HTTP polling แทน...');
+            
+            // ทดสอบ HTTP fallback ทันที
             await fetchQueueDataHTTP();
+            
+            // เริ่ม HTTP polling
+            setInterval(async () => {
+                try {
+                    await fetchQueueDataHTTP();
+                    console.log('📊 HTTP polling อัพเดตข้อมูลเรียบร้อย');
+                } catch (httpError) {
+                    console.log('⚠️ HTTP polling ล้มเหลว:', httpError.message);
+                }
+            }, 10000); // ทุก 10 วินาที
         }
         
         // Polling สำรอง
