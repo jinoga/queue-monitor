@@ -28,7 +28,7 @@ const ORIGINAL_QUEUE_URL = 'https://elands.dol.go.th/QueueOnlineServer/queue/294
 const ORIGINAL_STREAM_URL = 'https://elands.dol.go.th/QueueOnlineServer/service/queue_stream/294';
 
 // Cloudflare Workers Proxy URL - ให้ใส่ URL ของ Worker ที่สร้าง
-const CLOUDFLARE_PROXY = process.env.CLOUDFLARE_PROXY || 'https://your-worker.your-subdomain.workers.dev'; // เปลี่ยนเป็น URL จริง
+const CLOUDFLARE_PROXY = process.env.CLOUDFLARE_PROXY || 'https://nskque.foryoukanade.workers.dev/'; // เปลี่ยนเป็น URL จริง
 
 // สร้าง Proxied URLs
 const QUEUE_URL = `${CLOUDFLARE_PROXY}?url=${encodeURIComponent(ORIGINAL_QUEUE_URL)}`;
