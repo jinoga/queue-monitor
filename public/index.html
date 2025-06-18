@@ -44,7 +44,6 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* NEW: Status Panel Styles from second file */
         .status-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -148,6 +147,22 @@
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.02); }
         }
+        
+        /* NEW: Animation for updating elements */
+        .update-anim {
+            animation: fadeIn 0.7s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0.3;
+                transform: translateY(5px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
         .queue-status {
             display: flex;
@@ -214,7 +229,6 @@
             border-left: 4px solid #2196F3;
         }
 
-        /* NEW: Counter Display Styles from second file */
         .counter-display-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -342,7 +356,6 @@
             <p>แจ้งเตือนคิว + สถานะช่องบริการ</p>
         </div>
 
-        <!-- Status Panel (from second file) -->
         <div class="status-panel">
             <div class="status-card" id="connectionCard">
                 <div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div>
@@ -358,10 +371,8 @@
             </div>
         </div>
 
-        <!-- Alert Area -->
         <div id="alertArea"></div>
 
-        <!-- Notification Panel (from first file) -->
         <div class="notification-panel">
             <h2>🔔 ระบบแจ้งเตือนคิว</h2>
             <div class="notification-input">
@@ -411,7 +422,6 @@
             </div>
         </div>
 
-        <!-- Current Queue Display (from first file) -->
         <div class="current-queue">
             <h2>📋 ข้อมูลคิวปัจจุบัน</h2>
             <div class="queue-display">
@@ -431,7 +441,6 @@
             </div>
         </div>
 
-        <!-- Counter Display Section (from second file) -->
         <div>
             <h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2>
             <div id="counterDisplay" class="counter-display-grid">
@@ -447,12 +456,12 @@
         </div>
     </div>
 
-    <!-- Hidden Audio Elements -->
+    <!-- Hidden Audio Elements (with longer sounds) -->
     <audio id="nearQueueSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+D2u2MZAzGJ0fHNeSsFJH/M8N2QQAkUXbPm5ahTEQZJpt/2wmIdBDGT0fHNeSsFJH7K8N2LQwYOVa3d5qhgEQVVq+D2zE8=" type="audio/wav">
+        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABFVVVT//tAwR4AAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tAwSAASAAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-iNId3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-AAB/4Qe3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3/g" type="audio/mp3">
     </audio>
     <audio id="currentQueueSound" preload="auto">
-        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+D2u2MZAzGJ0fHNeSsFJH/M8N2QQAkUXbPm5ahTEQZJpt/2wmIdBDGT0fHNeSsFJH7K8N2LQwYOVa3d5qhgEQVVq+D2zE8=" type="audio/wav">
+        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABFVVVT//tAwR4AAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-iNId3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-iNTRhAAB/4Qe3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mp3">
     </audio>
 
     <script>
@@ -460,7 +469,6 @@
         const SUPABASE_URL = 'https://ldkelubmmtkrfybapdpc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxka2VsdWJtbXRrcmZ5YmFwZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxMjc4ODEsImV4cCI6MjA2NTcwMzg4MX0.ALdN7YRecJPW_5Qz8pBTFJ1BD6SWTx2fytblNHtC9zI';
         
-        // Initialize Supabase
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         class QueueMonitor {
@@ -481,20 +489,16 @@
                 this.startRealtimeSubscription();
                 this.fetchInitialData();
                 
-                console.log('✅ Queue Monitor (Combined) เริ่มต้นเรียบร้อย');
+                console.log('✅ Queue Monitor (Combined v2) Initialized');
             }
 
             initializeElements() {
                 this.elements = {
                     alertArea: document.getElementById('alertArea'),
-                    
-                    // NEW: Status Panel elements
                     connectionCard: document.getElementById('connectionCard'),
                     connectionStatus: document.getElementById('connectionStatus'),
                     lastUpdate: document.getElementById('lastUpdate'),
                     counterCount: document.getElementById('counterCount'),
-
-                    // Notification elements
                     queueNumber: document.getElementById('queueNumber'),
                     trackBtn: document.getElementById('trackBtn'),
                     clearTrackBtn: document.getElementById('clearTrackBtn'),
@@ -504,27 +508,34 @@
                     queuePosition: document.getElementById('queuePosition'),
                     queueEstimate: document.getElementById('queueEstimate'),
                     notificationStatus: document.getElementById('notificationStatus'),
-                    
-                    // Queue display elements
                     currentQueueNo: document.getElementById('currentQueueNo'),
                     currentCounter: document.getElementById('currentCounter'),
                     queueTrackingInfo: document.getElementById('queueTrackingInfo'),
-                    
-                    // NEW: Counter Display element
                     counterDisplay: document.getElementById('counterDisplay'),
-
-                    // Settings elements
                     soundEnabled: document.getElementById('soundEnabled'),
                     notifyNear: document.getElementById('notifyNear'),
                     notifyCurrent: document.getElementById('notifyCurrent'),
                     volumeSlider: document.getElementById('volumeSlider'),
                     volumeValue: document.getElementById('volumeValue'),
                     testSoundBtn: document.getElementById('testSoundBtn'),
-                    
-                    // Audio elements
                     nearQueueSound: document.getElementById('nearQueueSound'),
                     currentQueueSound: document.getElementById('currentQueueSound')
                 };
+            }
+            
+            /**
+             * Updates an element's text content and applies a brief animation.
+             * @param {HTMLElement} element The element to update.
+             * @param {string} newText The new text content.
+             */
+            updateElementWithAnimation(element, newText) {
+                if (element && element.textContent !== String(newText)) {
+                    element.textContent = newText;
+                    element.classList.add('update-anim');
+                    element.addEventListener('animationend', () => {
+                        element.classList.remove('update-anim');
+                    }, { once: true });
+                }
             }
 
             bindEvents() {
@@ -534,7 +545,6 @@
                     if (e.key === 'Enter') this.trackQueue();
                 });
                 
-                // Settings events
                 this.elements.soundEnabled.addEventListener('change', (e) => {
                     this.notificationSettings.soundEnabled = e.target.checked;
                     this.saveSettings();
@@ -557,11 +567,10 @@
                     this.playNotificationSound('current');
                 });
 
-                // Load saved tracked queue
                 const savedQueue = localStorage.getItem('trackedQueue');
                 if (savedQueue) {
                     this.elements.queueNumber.value = savedQueue;
-                    this.trackQueue(); // Auto-track on load
+                    this.trackQueue();
                 }
             }
             
@@ -587,21 +596,19 @@
             async fetchInitialData() {
                 this.updateConnectionStatus('connecting');
                 try {
-                    // Fetch latest status and waiting queues
                     const { data: latestStatusData, error: latestStatusError } = await supabase
-                        .from('current_queue_status') // Using the view for efficiency
+                        .from('current_queue_status')
                         .select('*')
                         .single();
 
                     if (latestStatusError) throw latestStatusError;
                     
-                    // Fetch recent history for counter display
                     const { data: snapshotsData, error: snapshotsError } = await supabase
                         .from('queue_snapshots')
                         .select('current_queue, current_counter, created_at')
-                        .not('current_counter', 'is', null) // Only get entries that have a counter
+                        .not('current_counter', 'is', null)
                         .order('created_at', { ascending: false })
-                        .limit(50); // Get last 50 events for history
+                        .limit(50);
 
                     if (snapshotsError) throw snapshotsError;
 
@@ -620,8 +627,8 @@
                     .channel('queue_updates')
                     .on('postgres_changes', 
                         { event: '*', schema: 'public', table: 'latest_status' },
-                        (payload) => {
-                            console.log('📡 Real-time update received', payload.new);
+                        () => {
+                            console.log('📡 Real-time update received');
                             this.fetchInitialData();
                         }
                     )
@@ -635,43 +642,31 @@
             processAllData(latestData, snapshots) {
                 this.latestData = latestData;
                 
-                // 1. Update Top Status Panel
-                this.elements.lastUpdate.textContent = new Date(latestData.last_updated).toLocaleTimeString('th-TH');
+                this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH'));
+                this.updateElementWithAnimation(this.elements.currentQueueNo, latestData.current_queue || '-');
+                this.updateElementWithAnimation(this.elements.currentCounter, latestData.current_counter || '-');
 
-                // 2. Update Current Queue Display
-                this.elements.currentQueueNo.textContent = latestData.current_queue || '-';
-                this.elements.currentCounter.textContent = latestData.current_counter || '-';
-
-                // 3. Process and Update Counter Display
                 const counterHistory = this.processSnapshotsForCounters(snapshots);
                 this.updateCounterDisplay(counterHistory);
                 
-                // 4. Update Tracking Info (if active)
                 this.updateQueueTrackingInfo();
                 this.updateTrackedQueueStatus();
             }
 
             processSnapshotsForCounters(snapshots) {
                 if (!snapshots || snapshots.length === 0) return {};
-                
                 const historyByCounter = {};
-                
                 for (const snapshot of snapshots) {
                     const counter = snapshot.current_counter;
                     const queue = snapshot.current_queue;
                     if (!counter || !queue) continue;
-
                     if (!historyByCounter[counter]) {
                         historyByCounter[counter] = { current: null, completed: [] };
                     }
-                    
                     const history = historyByCounter[counter];
-                    
-                    // The first one we see for a counter is the most recent (current)
                     if (!history.current) {
                         history.current = queue;
                     } else {
-                        // Add to completed list, avoid duplicates, and limit to 3
                         if (history.completed.length < 3 && !history.completed.some(c => c.queueNo === queue) && history.current !== queue) {
                            history.completed.push({
                                queueNo: queue,
@@ -685,7 +680,7 @@
 
             updateCounterDisplay(counterHistory) {
                 const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b));
-                this.elements.counterCount.textContent = counterNumbers.length;
+                this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length);
                 
                 if (counterNumbers.length === 0) {
                     this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`;
@@ -708,7 +703,7 @@
                             <h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3>
                             <div class="counter-current">
                                 <div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div>
-                                <div class="counter-queue-no">${data.current || '-'}</div>
+                                <div class="counter-queue-no update-anim">${data.current || '-'}</div>
                             </div>
                             <div class="completed-list">
                                 <div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div>
@@ -717,7 +712,6 @@
                         </div>
                     `;
                 }).join('');
-
                 this.elements.counterDisplay.innerHTML = counterHTML;
             }
             
@@ -726,39 +720,25 @@
                     this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="text-align: center; color: #666;">กรุณาใส่เลขคิวที่ต้องการติดตามด้านบน</div>`;
                     return;
                 }
-                
                 const currentQueueNo = this.latestData.current_queue;
                 const queueList = this.latestData.waiting_queues || [];
-                
                 if (!currentQueueNo) {
                     this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="text-align: center; color: #f44336;">❌ ไม่สามารถดึงข้อมูลคิวปัจจุบันได้</div>`;
                     return;
                 }
-                
                 const allQueues = [{ queue_no: currentQueueNo, position: 0 }, ...queueList];
                 const trackedItem = allQueues.find(q => q.queue_no === this.trackedQueue);
-                
                 if (trackedItem) {
                     if (trackedItem.position === 0) {
                         this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%); border-left-color: #4caf50; text-align: center;">🎯 คิว "${this.trackedQueue}" กำลังให้บริการอยู่!</div>`;
                         return;
                     }
-                    
                     const remaining = trackedItem.position;
                     const timeText = `ประมาณ ${trackedItem.estimated_wait || remaining * 3} นาที`;
                     let icon = remaining <= 3 ? '⚠️' : '🔔';
                     let bgColor = remaining <= 3 ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
                     let borderColor = remaining <= 3 ? '#f44336' : '#ff9800';
-
-                    this.elements.queueTrackingInfo.innerHTML = `
-                        <div class="queue-item" style="background: ${bgColor}; border-left-color: ${borderColor};">
-                            <div style="text-align: center; width: 100%;">
-                                <div style="font-size: 1.4em; font-weight: bold;">${icon} คิว "${this.trackedQueue}"</div>
-                                <div style="font-size: 1.8em; font-weight: bold; color: ${borderColor}; margin: 5px 0;">เหลือ ${remaining} คิว</div>
-                                <div style="color: #666; font-size: 0.9em;">${timeText}</div>
-                            </div>
-                        </div>`;
-
+                    this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: ${bgColor}; border-left-color: ${borderColor};"><div style="text-align: center; width: 100%;"><div style="font-size: 1.4em; font-weight: bold;">${icon} คิว "${this.trackedQueue}"</div><div style="font-size: 1.8em; font-weight: bold; color: ${borderColor}; margin: 5px 0;">เหลือ ${remaining} คิว</div><div style="color: #666; font-size: 0.9em;">${timeText}</div></div></div>`;
                 } else {
                     this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; text-align: center;">❓ ไม่พบคิว "${this.trackedQueue}" ในรายการ</div>`;
                 }
@@ -794,16 +774,12 @@
 
             updateTrackedQueueStatus() {
                 if (!this.trackedQueue || !this.latestData) return;
-                
                 const currentQueueNo = this.latestData.current_queue;
                 const queueList = this.latestData.waiting_queues || [];
                 if (!currentQueueNo) return;
-                
                 const trackedItem = [{ queue_no: currentQueueNo, position: 0 }, ...queueList].find(q => q.queue_no === this.trackedQueue);
-                
                 const el = this.elements;
                 el.trackedQueue.classList.remove('near', 'current');
-                
                 if (trackedItem) {
                     if (trackedItem.position === 0) {
                         el.queuePosition.textContent = '🎯 กำลังให้บริการ';
@@ -835,9 +811,7 @@
             triggerNotification(type, details = {}) {
                 const setting = type === 'current' ? 'notifyCurrent' : 'notifyNear';
                 if (!this.notificationSettings[setting] || this.lastNotificationState === type) return;
-
                 this.playNotificationSound(type);
-                
                 let title, body;
                 if (type === 'current') {
                     title = '🎯 ถึงคิวแล้ว!';
@@ -846,17 +820,15 @@
                     title = '⚠️ ใกล้ถึงคิวแล้ว!';
                     body = `คิว ${this.trackedQueue} เหลืออีก ${details.remaining} คิว (${details.timeText})`;
                 }
-
                 this.showBrowserNotification(title, body);
                 this.showAlert(body, type === 'current' ? 'success' : 'warning');
                 this.lastNotificationState = type;
             }
 
-            updateConnectionStatus(status) { // 'connecting', 'connected', 'error'
+            updateConnectionStatus(status) {
                 const card = this.elements.connectionCard;
                 const text = this.elements.connectionStatus;
                 card.classList.remove('connected');
-
                 if (status === 'connected') {
                     text.textContent = 'เชื่อมต่อแล้ว';
                     card.classList.add('connected');
