@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบติดตามคิวสำนักงานที่ดิน จังหวัดนครสวรรค์</title>
+    <title>ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</title>
     
-    <!-- Supabase -->
+    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
+        /* --- General & Layout --- */
         * {
             margin: 0;
             padding: 0;
@@ -20,6 +21,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            color: #333;
         }
 
         .container {
@@ -30,7 +32,8 @@
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-
+        
+        /* --- Header --- */
         .header {
             background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
             color: white;
@@ -44,6 +47,7 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
+        /* --- Status Panel --- */
         .status-panel {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -71,301 +75,162 @@
             color: #555;
             margin-top: 5px;
         }
+        
+        /* --- Alert Area --- */
+        .alert-area-container {
+             padding: 0 30px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+        }
+        .alert-success {
+            background-color: #e8f5e9; color: #2e7d32; border-color: #4caf50;
+        }
+        .alert-warning {
+            background-color: #fff8e1; color: #f57c00; border-color: #ff9800;
+        }
+        .alert-info {
+            background-color: #e3f2fd; color: #1565c0; border-color: #2196F3;
+        }
 
+        /* --- Notification & Tracking Panel --- */
         .notification-panel {
-            background: linear-gradient(135deg, #fff3e0 0%, #ffcc02 100%);
+            background: linear-gradient(135deg, #fff3e0 0%, #ffebcc 100%);
             padding: 25px;
             border-radius: 15px;
             margin: 0 30px 30px 30px;
             border-left: 5px solid #ff9800;
         }
-
         .notification-input {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
+            display: flex; gap: 15px; align-items: center; flex-wrap: wrap; margin-bottom: 20px;
         }
-
         .queue-input {
-            padding: 12px 16px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1.1em;
-            font-weight: bold;
-            text-align: center;
-            width: 120px;
+            padding: 12px 16px; border: 2px solid #ddd; border-radius: 10px; font-size: 1.1em; font-weight: bold; text-align: center; width: 120px;
         }
-
         .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 12px 24px; border: none; border-radius: 25px; font-size: 1em; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
         }
-
         .btn-warning {
-            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
-            color: white;
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white;
         }
-
         .btn-secondary {
-            background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%);
-            color: white;
+            background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%); color: white;
         }
 
+        /* --- Tracked Queue Card Styles --- */
         .tracked-queue {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background: white; padding: 20px; border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #9e9e9e;
         }
-
         .tracked-queue.near {
-            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
-            border-left: 5px solid #f44336;
-            animation: glow 2s infinite;
+            background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; animation: glow 2s infinite;
         }
-
         .tracked-queue.current {
-            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-            border-left: 5px solid #4caf50;
-            animation: pulse 1s infinite;
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; animation: pulse 1s infinite;
         }
-        
-        /* Special style for passed queue */
         .tracked-queue.passed {
-            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
-            border-left: 5px solid #e91e63;
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63;
         }
-
-
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3); }
-            50% { box-shadow: 0 8px 16px rgba(244, 67, 54, 0.6); }
+        .queue-status {
+            display: flex; justify-content: space-between; align-items: center;
         }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
+        .queue-info {
+            display: flex; gap: 20px; align-items: center;
+        }
+        .queue-number {
+            font-size: 2em; font-weight: bold; color: #555;
+        }
+        .queue-details {
+            display: flex; flex-direction: column; gap: 5px;
         }
         
+        /* --- Notification Settings --- */
+        .notification-settings {
+            background: #f5f5f5; padding: 15px; border-radius: 10px; margin-top: 15px;
+        }
+        .settings-row {
+            display: flex; gap: 15px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;
+        }
+        .checkbox-group {
+            display: flex; align-items: center; gap: 5px;
+        }
+        .volume-control {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sound-test-btn {
+            padding: 5px 10px; font-size: 0.8em; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer;
+        }
+
+        /* --- Main Content Display --- */
+        .current-queue {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; margin: 0 30px 30px 30px; border-radius: 15px; border-left: 5px solid #2196F3;
+        }
+        .queue-display {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;
+        }
+        .queue-current, .queue-list {
+            background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .current-queue-number {
+            font-size: 3em; font-weight: bold; color: #1976D2; margin: 10px 0; text-align: center;
+        }
+        .queue-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #2196F3;
+        }
+
+        /* --- Counter Display --- */
+        .counter-display-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 0 30px 30px 30px;
+        }
+        .counter-display-card {
+            background: white; border-radius: 15px; padding: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-left: 5px solid #2196F3; display: flex; flex-direction: column;
+        }
+        .counter-current {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center;
+        }
+        .counter-queue-no {
+            font-size: 2em; font-weight: bold; color: #2e7d32;
+        }
+        .completed-list {
+            background: #f5f5f5; padding: 15px; border-radius: 10px; flex-grow: 1;
+        }
+        .completed-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin: 5px 0; background: white; border-radius: 8px; border-left: 3px solid #4caf50;
+        }
+
+        /* --- Footer & Animations --- */
+        .footer {
+            text-align: center; padding: 20px; color: #a7a7a7; border-top: 1px solid #eee; background-color: white;
+        }
         .update-anim {
             animation: fadeIn 0.7s ease-in-out;
         }
-
         @keyframes fadeIn {
-            from {
-                opacity: 0.3;
-                transform: translateY(5px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0.3; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3); } 50% { box-shadow: 0 8px 16px rgba(244, 67, 54, 0.6); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); }
         }
 
-        .queue-status {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .queue-info {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-        }
-
-        .queue-number {
-            font-size: 2em;
-            font-weight: bold;
-            color: #ff9800;
-        }
-
-        .queue-details {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .current-queue {
-            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-            padding: 25px;
-            margin: 0 30px 30px 30px;
-            border-radius: 15px;
-            border-left: 5px solid #2196F3;
-        }
-
-        .queue-display {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .queue-current, .queue-list {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        .current-queue-number {
-            font-size: 3em;
-            font-weight: bold;
-            color: #1976D2;
-            margin: 10px 0;
-            text-align: center;
-        }
-
-        .queue-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin: 5px 0;
-            background: #f5f5f5;
-            border-radius: 8px;
-            border-left: 4px solid #2196F3;
-        }
-
-        .counter-display-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 0 30px 30px 30px;
-        }
-        .counter-display-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            border-left: 5px solid #2196F3;
-            display: flex;
-            flex-direction: column;
-        }
-        .counter-current {
-            background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .counter-queue-no {
-            font-size: 2em;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-        .completed-list {
-            background: #f5f5f5; 
-            padding: 15px; 
-            border-radius: 10px;
-            flex-grow: 1;
-        }
-        .completed-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            margin: 5px 0;
-            background: white;
-            border-radius: 8px;
-            border-left: 3px solid #4caf50;
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 0 30px 20px 30px;
-        }
-
-        .alert-success {
-            background: #e8f5e8;
-            color: #2e7d32;
-            border-left: 4px solid #4caf50;
-        }
-
-        .alert-warning {
-            background: #fff3e0;
-            color: #f57c00;
-            border-left: 4px solid #ff9800;
-        }
-        
-        .alert-info {
-            background: #e3f2fd;
-            color: #1565c0;
-            border-left: 4px solid #2196F3;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            border-top: 1px solid #eee;
-        }
-
-        .notification-settings {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 15px;
-        }
-
-        .settings-row {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .volume-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .sound-test-btn {
-            padding: 5px 10px;
-            font-size: 0.8em;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
+        /* --- Responsive --- */
         @media (max-width: 768px) {
-            .queue-display, .counter-display-grid, .status-panel {
-                grid-template-columns: 1fr;
-            }
-            .notification-input {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .queue-input {
-                width: 100%;
-            }
+            .queue-display, .counter-display-grid, .status-panel { grid-template-columns: 1fr; }
+            .notification-input { flex-direction: column; align-items: stretch; }
+            .queue-input { width: 100%; }
+            .header h1 { font-size: 1.8em; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏢 ระบบติดตามคิวสำนักงานที่ดิน จังหวัดนครสวรรค์</h1>
-            <p>แจ้งเตือนคิว + สถานะช่องบริการ</p>
+            <h1>🏢 ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</h1>
+            <p>แจ้งเตือนคิว + สถานะช่องบริการ Real-time</p>
         </div>
 
         <div class="status-panel">
@@ -379,11 +244,11 @@
             </div>
             <div class="status-card">
                 <div class="status-value" id="counterCount">0</div>
-                <div class="status-label">🪟 จำนวนช่องบริการ</div>
+                <div class="status-label">🪟 ช่องบริการ</div>
             </div>
         </div>
 
-        <div id="alertArea"></div>
+        <div class="alert-area-container" id="alertArea"></div>
 
         <div class="notification-panel">
             <h2>🔔 ระบบแจ้งเตือนคิว</h2>
@@ -463,21 +328,17 @@
         </div>
 
         <div class="footer">
-            <p>🌐 Online Queue Monitor for Land Office</p>
-            <p>🔔 Smart Notification • 🪟 Counter Status</p>
+            <p>Queue Monitor v4.0 - Resilient Connection</p>
         </div>
     </div>
 
     <!-- Hidden Audio Elements with longer sounds -->
     <audio id="nearQueueSound" preload="auto">
-        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABFVVVT//tAwR4AAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tAwSAASAAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-iNId3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-AAB/4Qe3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mp3">
-    </audio>
-    <audio id="currentQueueSound" preload="auto">
-        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABFVVVT//tAwR4AAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-NId3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-AAB/4Qe3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mp3">
+        <source src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjQwLjEwMQAAAAAAAAAAAAAA//tAwAAAAAAAAAAAAAAAAAAAAAAAABFVVVT//tAwR4AAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//tAwSAASAAAAAAAAAAAAAAAADTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-NId3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV-AAB/4Qe3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3-Puffff/VIVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV" type="audio/mp3">
     </audio>
 
     <script>
-        // Configuration
+        // --- Configuration ---
         const SUPABASE_URL = 'https://ldkelubmmtkrfybapdpc.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxka2VsdWJtbXRrcmZ5YmFwZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxMjc4ODEsImV4cCI6MjA2NTcwMzg4MX0.ALdN7YRecJPW_5Qz8pBTFJ1BD6SWTx2fytblNHtC9zI';
         
@@ -488,21 +349,28 @@
                 this.latestData = null;
                 this.trackedQueue = null;
                 this.lastNotificationState = null;
-                this.isAudioUnlocked = false; // Flag to check if audio is ready to play
+                this.isAudioUnlocked = false;
                 this.notificationSettings = {
                     soundEnabled: true,
                     notifyNear: true,
                     notifyCurrent: true,
                     volume: 0.5
                 };
+
+                // Connection Stability Variables
+                this.subscription = null;
+                this.reconnectTimer = null;
+                this.reconnectAttempts = 0;
+                this.lastSuccessfulFetch = Date.now();
+                this.watchdogTimer = null;
                 
                 this.initializeElements();
                 this.bindEvents();
                 this.setupNotifications();
                 this.startRealtimeSubscription();
-                this.fetchInitialData();
+                this.startWatchdog();
                 
-                console.log('✅ Queue Monitor (v3 - Robust Audio & Logic) Initialized');
+                console.log('✅ Queue Monitor (v4 - Resilient Connection) Initialized');
             }
 
             initializeElements() {
@@ -545,18 +413,24 @@
                 
                 console.log('🔓 Attempting to unlock audio context...');
                 const sounds = [this.elements.nearQueueSound, this.elements.currentQueueSound];
+                let unlockSuccess = true;
                 sounds.forEach(sound => {
-                    sound.play().then(() => {
-                        sound.pause();
-                        sound.currentTime = 0;
-                    }).catch(e => {
-                        // This can fail if the user hasn't interacted yet, which is fine.
-                        // The next interaction will try again.
-                    });
+                    const promise = sound.play();
+                    if (promise !== undefined) {
+                        promise.then(() => {
+                            sound.pause();
+                            sound.currentTime = 0;
+                        }).catch(e => {
+                            console.error("Audio unlock failed:", e);
+                            unlockSuccess = false;
+                        });
+                    }
                 });
                 
-                this.isAudioUnlocked = true;
-                console.log('✅ Audio context should be unlocked.');
+                if (unlockSuccess) {
+                    this.isAudioUnlocked = true;
+                    console.log('✅ Audio context should be unlocked.');
+                }
             }
             
             updateElementWithAnimation(element, newText) {
@@ -595,7 +469,6 @@
                     this.saveSettings();
                 });
                 
-                // Test sound button now also unlocks audio
                 this.elements.testSoundBtn.addEventListener('click', () => {
                     this.unlockAudio(); // Ensure audio is unlocked
                     this.playNotificationSound('current');
@@ -635,23 +508,149 @@
             }
 
             async fetchInitialData() {
-                // ... same as before
+                try {
+                    const { data: latestStatusData, error: latestStatusError } = await supabase
+                        .from('current_queue_status')
+                        .select('*')
+                        .single();
+
+                    if (latestStatusError) throw latestStatusError;
+                    
+                    const { data: snapshotsData, error: snapshotsError } = await supabase
+                        .from('queue_snapshots')
+                        .select('current_queue, current_counter, created_at')
+                        .not('current_counter', 'is', null)
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+
+                    if (snapshotsError) throw snapshotsError;
+                    
+                    this.lastSuccessfulFetch = Date.now();
+                    this.processAllData(latestStatusData, snapshotsData);
+
+                } catch (error) {
+                    console.error('Error fetching initial data:', error);
+                    this.updateConnectionStatus('error');
+                    this.showNoDataMessage();
+                }
+            }
+            
+            startRealtimeSubscription() {
+                if (this.subscription) {
+                    supabase.removeChannel(this.subscription);
+                    this.subscription = null;
+                }
+            
+                this.updateConnectionStatus('connecting');
+                console.log('🔄 Attempting to subscribe to real-time channel...');
+            
+                this.subscription = supabase
+                    .channel('queue_updates')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'latest_status' },
+                        () => {
+                            console.log('📡 Real-time update received!');
+                            this.fetchInitialData();
+                        }
+                    )
+                    .subscribe((status, err) => {
+                        switch (status) {
+                            case 'SUBSCRIBED':
+                                console.log('✅ Successfully subscribed to real-time channel!');
+                                this.updateConnectionStatus('connected');
+                                clearTimeout(this.reconnectTimer);
+                                this.reconnectAttempts = 0;
+                                this.fetchInitialData();
+                                break;
+                            case 'TIMED_OUT':
+                            case 'CLOSED':
+                            case 'CHANNEL_ERROR':
+                                console.warn(`⚠️ Subscription status: ${status}.`, err || '');
+                                this.updateConnectionStatus('reconnecting');
+                                this.handleReconnect();
+                                break;
+                        }
+                    });
             }
 
-            startRealtimeSubscription() {
-                // ... same as before
+            handleReconnect() {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectAttempts++;
+                const delay = Math.min(1000 * (2 ** this.reconnectAttempts), 30000); 
+                console.log(`Will attempt to reconnect in ${delay / 1000}s... (Attempt #${this.reconnectAttempts})`);
+                this.reconnectTimer = setTimeout(() => {
+                    console.log('🔁 Reconnecting now...');
+                    this.startRealtimeSubscription();
+                }, delay);
+            }
+
+            startWatchdog() {
+                this.watchdogTimer = setInterval(() => {
+                    const timeSinceLastFetch = Date.now() - this.lastSuccessfulFetch;
+                    if (timeSinceLastFetch > 90000) {
+                        console.warn(`🐶 Watchdog: Connection seems stale (no data for >90s). Forcing reconnect.`);
+                        this.showAlert('การเชื่อมต่อค้าง, กำลังเชื่อมต่อใหม่อัตโนมัติ...', 'info');
+                        this.startRealtimeSubscription();
+                    }
+                }, 30000);
             }
 
             processAllData(latestData, snapshots) {
-                // ... same as before
+                this.latestData = latestData;
+                
+                this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH'));
+                this.updateElementWithAnimation(this.elements.currentQueueNo, latestData.current_queue || '-');
+                this.updateElementWithAnimation(this.elements.currentCounter, latestData.current_counter || '-');
+
+                const counterHistory = this.processSnapshotsForCounters(snapshots);
+                this.updateCounterDisplay(counterHistory);
+                
+                this.updateQueueTrackingInfo();
+                this.updateTrackedQueueStatus();
             }
 
             processSnapshotsForCounters(snapshots) {
-                // ... same as before
+                if (!snapshots || snapshots.length === 0) return {};
+                const historyByCounter = {};
+                for (const snapshot of snapshots) {
+                    const counter = snapshot.current_counter;
+                    const queue = snapshot.current_queue;
+                    if (!counter || !queue) continue;
+                    if (!historyByCounter[counter]) {
+                        historyByCounter[counter] = { current: null, completed: [] };
+                    }
+                    const history = historyByCounter[counter];
+                    if (!history.current) {
+                        history.current = queue;
+                    } else {
+                        if (history.completed.length < 3 && !history.completed.some(c => c.queueNo === queue) && history.current !== queue) {
+                           history.completed.push({
+                               queueNo: queue,
+                               completedAt: new Date(snapshot.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit'})
+                           });
+                        }
+                    }
+                }
+                return historyByCounter;
             }
 
             updateCounterDisplay(counterHistory) {
-                // ... same as before
+                const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b));
+                this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length);
+                
+                if (counterNumbers.length === 0) {
+                    this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`;
+                    return;
+                }
+
+                this.elements.counterDisplay.innerHTML = counterNumbers.map(counterNo => {
+                    const data = counterHistory[counterNo];
+                    const completedQueuesHTML = data.completed.length > 0 ? 
+                        data.completed.map(q => `<div class="completed-item"><span style="font-weight: bold; color: #2e7d32;">${q.queueNo}</span><span style="font-size: 0.8em; color: #666;">${q.completedAt}</span></div>`).join('') 
+                        : `<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">ยังไม่มีคิวที่เสร็จสิ้น</div>`;
+                    
+                    return `<div class="counter-display-card"><h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3><div class="counter-current"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div><div class="counter-queue-no update-anim">${data.current || '-'}</div></div><div class="completed-list"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div><div style="max-height: 120px; overflow-y: auto;">${completedQueuesHTML}</div></div></div>`;
+                }).join('');
             }
             
             updateQueueTrackingInfo() {
@@ -669,33 +668,31 @@
                 const trackedItem = allQueues.find(q => q.queue_no === this.trackedQueue);
                 
                 if (trackedItem) {
-                    // ... same logic as before for found items
+                    if (trackedItem.position === 0) {
+                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; text-align: center;">🎯 คิว "${this.trackedQueue}" กำลังให้บริการอยู่!</div>`;
+                    } else {
+                        const remaining = trackedItem.position;
+                        const timeText = `ประมาณ ${trackedItem.estimated_wait || remaining * 3} นาที`;
+                        const icon = remaining <= 3 ? '⚠️' : '🔔';
+                        const bgColor = remaining <= 3 ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)';
+                        const borderColor = remaining <= 3 ? '#f44336' : '#ff9800';
+                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: ${bgColor}; border-left-color: ${borderColor};"><div style="text-align: center; width: 100%;"><div style="font-size: 1.4em; font-weight: bold;">${icon} คิว "${this.trackedQueue}"</div><div style="font-size: 1.8em; font-weight: bold; color: ${borderColor}; margin: 5px 0;">เหลือ ${remaining} คิว</div><div style="color: #666; font-size: 0.9em;">${timeText}</div></div></div>`;
+                    }
                 } else {
-                    // NEW LOGIC FOR NOT-FOUND QUEUES
                     const trackedNum = parseInt(String(this.trackedQueue).replace(/\D/g, ''), 10);
                     const currentNum = parseInt(String(currentQueueNo).replace(/\D/g, ''), 10);
-
                     if (!isNaN(trackedNum) && !isNaN(currentNum) && trackedNum < currentNum) {
-                        // The tracked queue number is smaller, so it has passed
-                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63; text-align: center; flex-direction: column; align-items: center; gap: 5px; padding: 15px;">
-                            <div style="font-weight: bold; color: #c2185b;">🚫 คิว ${this.trackedQueue} ผ่านไปแล้ว</div>
-                            <small style="color: #666;">กรุณาติดต่อเจ้าหน้าที่</small>
-                        </div>`;
+                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63; text-align: center; flex-direction: column; align-items: center; gap: 5px; padding: 15px;"><div style="font-weight: bold; color: #c2185b;">🚫 คิว ${this.trackedQueue} ผ่านไปแล้ว</div><small style="color: #666;">กรุณาติดต่อเจ้าหน้าที่</small></div>`;
                     } else {
-                        // The queue is not in the list and not in the past, so it's either invalid or far in the future
-                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; text-align: center;">❓ ไม่พบคิว "${this.trackedQueue}" ในรายการ</div>`;
+                        this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; text-align: center;">❓ ไม่พบคิว "${this.trackedQueue}" ในรายการ<br><small>(อาจยังมาไม่ถึง หรือข้อมูลยังไม่เข้าระบบ)</small></div>`;
                     }
                 }
             }
             
             trackQueue() {
-                this.unlockAudio(); // <<-- KEY CHANGE: Unlock audio on first track action
-
+                this.unlockAudio();
                 const queueNumber = this.elements.queueNumber.value.trim().toUpperCase();
-                if (!queueNumber) {
-                    this.showAlert('กรุณาใส่เลขคิว', 'warning');
-                    return;
-                }
+                if (!queueNumber) { this.showAlert('กรุณาใส่เลขคิว', 'warning'); return; }
                 this.trackedQueue = queueNumber;
                 this.elements.trackedQueueNumber.textContent = queueNumber;
                 this.elements.trackedQueueContainer.style.display = 'block';
@@ -709,21 +706,26 @@
             }
 
             clearTracking() {
-                // ... same as before
+                this.trackedQueue = null;
+                this.elements.trackedQueueContainer.style.display = 'none';
+                this.elements.queueNumber.value = '';
+                this.lastNotificationState = null;
+                localStorage.removeItem('trackedQueue');
+                this.updateQueueTrackingInfo();
+                this.showAlert('❌ หยุดติดตามคิวแล้ว', 'info');
             }
 
             updateTrackedQueueStatus() {
                 if (!this.trackedQueue || !this.latestData) return;
-                
                 const currentQueueNo = this.latestData.current_queue;
                 const queueList = this.latestData.waiting_queues || [];
                 if (!currentQueueNo) return;
-                
-                const trackedItem = [{ queue_no: currentQueueNo, position: 0 }, ...queueList].find(q => q.queue_no === this.trackedQueue);
-                
+
                 const el = this.elements;
                 el.trackedQueue.classList.remove('near', 'current', 'passed');
                 
+                const trackedItem = [{ queue_no: currentQueueNo, position: 0 }, ...queueList].find(q => q.queue_no === this.trackedQueue);
+
                 if (trackedItem) {
                     if (trackedItem.position === 0) {
                         el.queuePosition.textContent = '🎯 กำลังให้บริการ';
@@ -742,15 +744,12 @@
                             el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว!';
                             this.triggerNotification('near', { remaining, timeText });
                         } else {
-                            // Reset state if it was 'near' but is now > 3 queues away
                             if (this.lastNotificationState === 'near') this.lastNotificationState = null;
                         }
                     }
                 } else {
-                    // NEW LOGIC FOR NOT-FOUND QUEUES
                     const trackedNum = parseInt(String(this.trackedQueue).replace(/\D/g, ''), 10);
                     const currentNum = parseInt(String(currentQueueNo).replace(/\D/g, ''), 10);
-                    
                     if (!isNaN(trackedNum) && !isNaN(currentNum) && trackedNum < currentNum) {
                         el.trackedQueue.classList.add('passed');
                         el.queuePosition.textContent = '🚫 คิวผ่านไปแล้ว';
@@ -758,7 +757,7 @@
                         el.notificationStatus.textContent = 'ตรวจสอบด่วน!';
                     } else {
                         el.queuePosition.textContent = 'ไม่พบคิวในรายการ';
-                        el.queueEstimate.textContent = 'กรุณาตรวจสอบเลขคิว';
+                        el.queueEstimate.textContent = 'โปรดตรวจสอบเลขคิว';
                         el.notificationStatus.textContent = '❓ ไม่พบข้อมูล';
                     }
                 }
@@ -768,16 +767,12 @@
                 const setting = type === 'current' ? 'notifyCurrent' : 'notifyNear';
                 if (!this.notificationSettings[setting] || this.lastNotificationState === type) return;
 
-                this.playNotificationSound(type); // Play sound first
+                this.playNotificationSound(type);
                 
-                let title, body;
-                if (type === 'current') {
-                    title = '🎯 ถึงคิวแล้ว!';
-                    body = `คิว ${this.trackedQueue} กำลังให้บริการที่ช่อง ${this.latestData.current_counter || '-'}`;
-                } else {
-                    title = '⚠️ ใกล้ถึงคิวแล้ว!';
-                    body = `คิว ${this.trackedQueue} เหลืออีก ${details.remaining} คิว (${details.timeText})`;
-                }
+                const title = (type === 'current') ? '🎯 ถึงคิวแล้ว!' : '⚠️ ใกล้ถึงคิวแล้ว!';
+                const body = (type === 'current') 
+                    ? `คิว ${this.trackedQueue} กำลังให้บริการที่ช่อง ${this.latestData.current_counter || '-'}`
+                    : `คิว ${this.trackedQueue} เหลืออีก ${details.remaining} คิว (${details.timeText})`;
 
                 this.showBrowserNotification(title, body);
                 this.showAlert(body, type === 'current' ? 'success' : 'warning');
@@ -785,32 +780,45 @@
             }
 
             playNotificationSound(type) {
-                if (!this.notificationSettings.soundEnabled) return;
-                
+                if (!this.notificationSettings.soundEnabled || !this.isAudioUnlocked) return;
                 const audio = type === 'current' ? this.elements.currentQueueSound : this.elements.nearQueueSound;
-                
-                // Ensure audio is ready to play from the start
                 audio.currentTime = 0; 
                 audio.volume = this.notificationSettings.volume;
+                audio.play().catch(e => console.error(`🔊 Sound play failed for '${type}':`, e));
+            }
 
-                const playPromise = audio.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(_ => {
-                        // Automatic playback started!
-                        console.log(`🔊 Playing '${type}' sound.`);
-                    }).catch(error => {
-                        // Auto-play was prevented
-                        console.error(`🔊 Sound play failed for '${type}':`, error);
-                        // Show a silent alert as a fallback
-                        if(this.isAudioUnlocked) { // Only show error if it *should* have worked
-                           this.showAlert('🔇 ไม่สามารถเล่นเสียงได้! (กรุณาเช็คการตั้งค่าเสียงของเบราว์เซอร์)', 'warning');
-                        }
-                    });
+            updateConnectionStatus(status) {
+                const card = this.elements.connectionCard;
+                const text = this.elements.connectionStatus;
+                card.classList.remove('connected');
+                switch (status) {
+                    case 'connected': text.textContent = 'เชื่อมต่อแล้ว'; card.classList.add('connected'); break;
+                    case 'reconnecting': text.textContent = 'กำลังเชื่อมต่อใหม่...'; break;
+                    case 'error': text.textContent = 'การเชื่อมต่อผิดพลาด'; break;
+                    case 'connecting': default: text.textContent = 'กำลังเชื่อมต่อ...'; break;
                 }
             }
 
-            // Other functions (updateConnectionStatus, showNoDataMessage, showBrowserNotification, showAlert) remain the same
-            // ...
+            showNoDataMessage() {
+                this.elements.currentQueueNo.textContent = '-';
+                this.elements.currentCounter.textContent = '-';
+                this.elements.counterDisplay.innerHTML = `<div style="text-align: center; padding: 40px; color: #f44336; grid-column: 1 / -1;">⚠️ ไม่สามารถโหลดข้อมูลได้</div>`;
+            }
+
+            showBrowserNotification(title, body) {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification(title, { body: body, icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text y="20" font-size="20">🏢</text></svg>' });
+                }
+            }
+
+            showAlert(message, type = 'success') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.textContent = message;
+                this.elements.alertArea.innerHTML = ''; // Clear previous alerts
+                this.elements.alertArea.appendChild(alertDiv);
+                setTimeout(() => { alertDiv.style.opacity = '0'; alertDiv.remove(); }, 5000);
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => new QueueMonitor());
