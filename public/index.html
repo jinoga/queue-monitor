@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</title>
     
-    <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* CSS is complete and correct. No changes needed. */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
         .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
@@ -32,23 +30,13 @@
         .btn-warning { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); color: white; }
         .btn-secondary { background: linear-gradient(135deg, #9e9e9e 0%, #616161 100%); color: white; }
         .tracked-queue { background: white; padding: 20px; border-radius: 10px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #9e9e9e; }
-        .tracked-queue.near { background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; animation: glow 2s infinite; }
-        .tracked-queue.current { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; animation: pulse 1s infinite; }
+        .tracked-queue.near { background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%); border-left-color: #f44336; animation: glow 1.5s infinite; }
+        .tracked-queue.current { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; animation: pulse 1.2s infinite; }
         .tracked-queue.passed { background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63; }
         .queue-status { display: flex; justify-content: space-between; align-items: center; }
         .queue-info { display: flex; gap: 20px; align-items: center; }
         .queue-number { font-size: 2em; font-weight: bold; color: #555; }
         .queue-details { display: flex; flex-direction: column; gap: 5px; }
-        .notification-settings { background: #f5f5f5; padding: 15px; border-radius: 10px; margin-top: 15px; }
-        .settings-row { display: flex; gap: 15px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-        .checkbox-group { display: flex; align-items: center; gap: 5px; }
-        .volume-control { display: flex; align-items: center; gap: 10px; }
-        .sound-test-btn { padding: 5px 10px; font-size: 0.8em; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .current-queue { background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 25px; margin: 0 30px 30px 30px; border-radius: 15px; border-left: 5px solid #2196F3; }
-        .queue-display { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px; }
-        .queue-current, .queue-list { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        .current-queue-number { font-size: 3em; font-weight: bold; color: #1976D2; margin: 10px 0; text-align: center; }
-        .queue-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin: 5px 0; background: #f9f9f9; border-radius: 8px; border-left: 4px solid #2196F3; }
         .counter-display-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; padding: 0 30px 30px 30px; }
         .counter-display-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); border-left: 5px solid #2196F3; display: flex; flex-direction: column; }
         .counter-current { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
@@ -60,22 +48,16 @@
         @keyframes fadeIn { from { opacity: 0.3; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes glow { 0%, 100% { box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3); } 50% { box-shadow: 0 8px 16px rgba(244, 67, 54, 0.6); } }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
-        @media (max-width: 768px) { .queue-display, .counter-display-grid, .status-panel { grid-template-columns: 1fr; } .notification-input { flex-direction: column; align-items: stretch; } .queue-input { width: 100%; } .header h1 { font-size: 1.8em; } }
+        @media (max-width: 768px) { .status-panel, .counter-display-grid { grid-template-columns: 1fr; } .notification-input { flex-direction: column; align-items: stretch; } .queue-input { width: 100%; } .header h1 { font-size: 1.8em; } }
     </style>
 </head>
 <body>
-    <audio id="nearQueueSound" preload="auto">
-        <source src="data:audio/mp3;base64,..."> <!-- Base64 data is correct -->
-    </audio>
-    <audio id="currentQueueSound" preload="auto">
-        <source src="data:audio/mp3;base64,..."> <!-- Base64 data is correct -->
-    </audio>
-
     <div class="container">
         <div class="header">
             <h1>🏢 ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</h1>
-            <p>แจ้งเตือนคิว + สถานะช่องบริการ Real-time</p>
+            <p>สถานะช่องบริการและการติดตามคิว</p>
         </div>
+
         <div class="status-panel">
             <div class="status-card" id="connectionCard">
                 <div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div>
@@ -90,9 +72,11 @@
                 <div class="status-label">🪟 ช่องบริการ</div>
             </div>
         </div>
+
         <div class="alert-area-container" id="alertArea"></div>
+
         <div class="notification-panel">
-            <h2>🔔 ระบบแจ้งเตือนคิว</h2>
+            <h2>🔔 ติดตามคิวของคุณ</h2>
             <div class="notification-input">
                 <label>เลขคิวของคุณ:</label>
                 <input type="text" id="queueNumber" class="queue-input" placeholder="เช่น 2014">
@@ -113,50 +97,8 @@
                     </div>
                 </div>
             </div>
-            <div class="notification-settings">
-                <h4>⚙️ การตั้งค่าการแจ้งเตือน</h4>
-                <div class="settings-row">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="soundEnabled" checked>
-                        <label for="soundEnabled">เปิดเสียงแจ้งเตือน</label>
-                    </div>
-                    <div class="volume-control">
-                        <label for="volumeSlider">ระดับเสียง:</label>
-                        <input type="range" id="volumeSlider" min="0" max="100" value="50">
-                        <span id="volumeValue">50%</span>
-                        <button class="sound-test-btn" id="testSoundBtn">ทดสอบเสียง</button>
-                    </div>
-                </div>
-                <div class="settings-row">
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="notifyNear" checked>
-                        <label for="notifyNear">แจ้งเตือนเมื่อใกล้ถึงคิว (เหลือ 3 คิว)</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="notifyCurrent" checked>
-                        <label for="notifyCurrent">แจ้งเตือนเมื่อถึงคิว</label>
-                    </div>
-                </div>
-            </div>
         </div>
-        <div class="current-queue">
-            <h2>📋 ข้อมูลคิวปัจจุบัน</h2>
-            <div class="queue-display">
-                <div class="queue-current">
-                    <h3>🎯 กำลังให้บริการ</h3>
-                    <div class="current-queue-number" id="currentQueueNo">-</div>
-                    <div>ช่องบริการที่ <span id="currentCounter">-</span></div>
-                </div>
-                <div class="queue-list">
-                    <h3>🔍 การติดตามคิว</h3>
-                    <div id="queueTrackingInfo">
-                        <div class="queue-item" style="text-align: center; color: #666;">
-                            กรุณาใส่เลขคิวที่ต้องการติดตามด้านบน
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+
         <div>
             <h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2>
             <div id="counterDisplay" class="counter-display-grid">
@@ -165,87 +107,233 @@
                 </div>
             </div>
         </div>
+        
         <div class="footer">
-            <p>Queue Monitor v13 - Stable</p>
+            <p>Queue Monitor v14 - Simplified & Auto-Refresh</p>
         </div>
     </div>
 
-    <!-- [FIX] SCRIPT MOVED TO THE END OF THE BODY TAG -->
+    <!-- [FIX] SCRIPT MOVED TO THE END OF THE BODY TAG for maximum reliability -->
     <script>
-        const SUPABASE_URL = 'https://ldkelubmmtkrfybapdpc.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxka2VsdWJtbXRrcmZ5YmFwZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxMjc4ODEsImV4cCI6MjA2NTcwMzg4MX0.ALdN7YRecJPW_5Qz8pBTFJ1BD6SWTx2fytblNHtC9zI';
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        class QueueMonitor {
-            constructor() {
-                this.latestData = null; this.trackedQueue = null; this.lastNotificationState = null; this.isAudioUnlocked = false; this.notificationSettings = { soundEnabled: true, notifyNear: true, notifyCurrent: true, volume: 0.5 }; this.subscription = null; this.reconnectTimer = null; this.reconnectAttempts = 0; this.lastSuccessfulFetch = Date.now(); this.watchdogTimer = null; this.elements = {};
-            }
+        (() => {
+            const SUPABASE_URL = 'https://ldkelubmmtkrfybapdpc.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxka2VsdWJtbXRrcmZ5YmFwZHBjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAxMjc4ODEsImV4cCI6MjA2NTcwMzg4MX0.ALdN7YRecJPW_5Qz8pBTFJ1BD6SWTx2fytblNHtC9zI';
             
-            init() {
-                if (this.initializeElements()) {
-                    this.bindEvents();
-                    this.setupNotifications();
-                    this.startRealtimeSubscription();
-                    this.startWatchdog();
-                    console.log('✅ Queue Monitor (v13 - Stable) Initialized');
-                }
+            if (!window.supabase) {
+                console.error("Supabase client is not loaded.");
+                return;
             }
-
-            initializeElements() {
-                const ids = ['alertArea', 'connectionCard', 'connectionStatus', 'lastUpdate', 'counterCount', 'queueNumber', 'trackBtn', 'clearTrackBtn', 'trackedQueueContainer', 'trackedQueue', 'trackedQueueNumber', 'queuePosition', 'queueEstimate', 'notificationStatus', 'currentQueueNo', 'currentCounter', 'queueTrackingInfo', 'counterDisplay', 'soundEnabled', 'notifyNear', 'notifyCurrent', 'volumeSlider', 'volumeValue', 'testSoundBtn', 'nearQueueSound', 'currentQueueSound'];
-                for (const id of ids) {
-                    const el = document.getElementById(id);
-                    if (!el) {
-                        console.error(`Fatal Error: Element with ID '${id}' was not found.`);
-                        alert(`เกิดข้อผิดพลาดร้ายแรง: ไม่พบ Element '${id}' ในหน้าเว็บ`);
-                        return false;
+            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            class QueueMonitor {
+                constructor() {
+                    this.latestData = null; this.trackedQueue = null; this.subscription = null; this.reconnectTimer = null; this.reconnectAttempts = 0; this.lastSuccessfulFetch = Date.now(); this.watchdogTimer = null; this.elements = {};
+                }
+                
+                init() {
+                    if (this.initializeElements()) {
+                        this.bindEvents();
+                        this.startRealtimeSubscription();
+                        this.startWatchdog();
+                        this.scheduleAutoRefresh(); // [ADDED]
+                        console.log('✅ Queue Monitor (v14 - Simplified) Initialized');
                     }
-                    this.elements[id] = el;
                 }
-                return true;
-            }
 
-            // [FIX] This function was missing in the previous version
-            updateElementWithAnimation(element, newText) {
-                if (element && element.textContent !== String(newText)) {
-                    element.textContent = newText;
-                    element.classList.add('update-anim');
-                    element.addEventListener('animationend', () => {
-                        element.classList.remove('update-anim');
-                    }, { once: true });
+                initializeElements() {
+                    const ids = ['alertArea', 'connectionCard', 'connectionStatus', 'lastUpdate', 'counterCount', 'queueNumber', 'trackBtn', 'clearTrackBtn', 'trackedQueueContainer', 'trackedQueue', 'trackedQueueNumber', 'queuePosition', 'queueEstimate', 'notificationStatus', 'counterDisplay'];
+                    for (const id of ids) {
+                        const el = document.getElementById(id);
+                        if (!el) {
+                            console.error(`Fatal Error: Element with ID '${id}' was not found.`);
+                            return false;
+                        }
+                        this.elements[id] = el;
+                    }
+                    return true;
                 }
-            }
+                
+                // [ADDED] Schedules the page to reload every 60 seconds
+                scheduleAutoRefresh() {
+                    setTimeout(() => {
+                        console.log("Auto-refreshing page for connection stability...");
+                        window.location.reload();
+                    }, 60000); // 60,000 milliseconds = 1 minute
+                }
 
-            // All other functions from here on are correct.
-            unlockAudio() { if (this.isAudioUnlocked) return; console.log('🔓 Attempting to unlock audio context...'); const sounds = [this.elements.nearQueueSound, this.elements.currentQueueSound]; sounds.forEach(sound => { if (sound) { const promise = sound.play(); if (promise !== undefined) { promise.then(() => { sound.pause(); sound.currentTime = 0; }).catch(e => {}); } } }); this.isAudioUnlocked = true; console.log('✅ Audio context unlocked.'); }
-            bindEvents() { this.elements.trackBtn.addEventListener('click', () => this.trackQueue()); this.elements.clearTrackBtn.addEventListener('click', () => this.clearTracking()); this.elements.queueNumber.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.trackQueue(); }); this.elements.soundEnabled.addEventListener('change', (e) => { this.notificationSettings.soundEnabled = e.target.checked; this.saveSettings(); }); this.elements.notifyNear.addEventListener('change', (e) => { this.notificationSettings.notifyNear = e.target.checked; this.saveSettings(); }); this.elements.notifyCurrent.addEventListener('change', (e) => { this.notificationSettings.notifyCurrent = e.target.checked; this.saveSettings(); }); this.elements.volumeSlider.addEventListener('input', (e) => { const volume = e.target.value / 100; this.notificationSettings.volume = volume; this.elements.volumeValue.textContent = e.target.value + '%'; this.saveSettings(); }); this.elements.testSoundBtn.addEventListener('click', () => { this.unlockAudio(); this.playNotificationSound('current'); this.showAlert('🔊 ทดสอบเสียงแจ้งเตือน "ถึงคิวแล้ว"', 'info'); }); const savedQueue = localStorage.getItem('trackedQueue'); if (savedQueue) { this.elements.queueNumber.value = savedQueue; this.trackQueue(true); } }
-            setupNotifications() { if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission().then(permission => { if (permission === 'granted') { this.showAlert('✅ ได้รับอนุญาตให้แสดงการแจ้งเตือนแล้ว', 'success'); } else { this.showAlert('⚠️ คุณปิดการแจ้งเตือนของเบราว์เซอร์', 'warning'); } }); } const savedSettings = localStorage.getItem('queueNotificationSettings'); if (savedSettings) { try { const settings = JSON.parse(savedSettings); this.notificationSettings = { ...this.notificationSettings, ...settings }; this.elements.soundEnabled.checked = this.notificationSettings.soundEnabled; this.elements.notifyNear.checked = this.notificationSettings.notifyNear; this.elements.notifyCurrent.checked = this.notificationSettings.notifyCurrent; this.elements.volumeSlider.value = this.notificationSettings.volume * 100; this.elements.volumeValue.textContent = `${Math.round(this.notificationSettings.volume * 100)}%`; } catch (e) { console.error("Could not parse settings from localStorage", e) } } }
-            saveSettings() { localStorage.setItem('queueNotificationSettings', JSON.stringify(this.notificationSettings)); }
-            async fetchInitialData() { try { this.updateConnectionStatus('connecting'); const { data: latestStatusData, error: latestStatusError } = await supabase.from('current_queue_status').select('*').single(); if (latestStatusError) throw latestStatusError; const { data: snapshotsData, error: snapshotsError } = await supabase.from('queue_snapshots').select('current_queue, current_counter, created_at').not('current_counter', 'is', null).order('created_at', { ascending: false }).limit(100); if (snapshotsError) throw snapshotsError; this.lastSuccessfulFetch = Date.now(); this.processAllData(latestStatusData, snapshotsData); this.updateConnectionStatus('connected'); } catch (error) { console.error('Error fetching initial data:', error); this.updateConnectionStatus('error'); this.showNoDataMessage(); } }
-            startRealtimeSubscription() { if (this.subscription) { supabase.removeChannel(this.subscription); this.subscription = null; } this.updateConnectionStatus('connecting'); console.log('🔄 Attempting to subscribe...'); this.subscription = supabase.channel('queue_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, () => { console.log('📡 Real-time update received!'); this.fetchInitialData(); }).subscribe((status, err) => { switch (status) { case 'SUBSCRIBED': console.log('✅ Successfully subscribed!'); this.updateConnectionStatus('connected'); clearTimeout(this.reconnectTimer); this.reconnectAttempts = 0; this.fetchInitialData(); break; case 'TIMED_OUT': case 'CLOSED': case 'CHANNEL_ERROR': console.warn(`⚠️ Subscription status: ${status}.`, err || ''); this.updateConnectionStatus('reconnecting'); this.handleReconnect(); break; } }); }
-            handleReconnect() { clearTimeout(this.reconnectTimer); this.reconnectAttempts++; const delay = Math.min(1000 * (2 ** this.reconnectAttempts), 30000); console.log(`Will reconnect in ${delay / 1000}s...`); this.reconnectTimer = setTimeout(() => { this.startRealtimeSubscription(); }, delay); }
-            startWatchdog() { this.watchdogTimer = setInterval(() => { const timeSinceLastFetch = Date.now() - this.lastSuccessfulFetch; if (timeSinceLastFetch > 90000) { console.warn(`🐶 Watchdog: Stale connection detected. Forcing reconnect.`); this.showAlert('การเชื่อมต่อค้าง, กำลังเชื่อมต่อใหม่อัตโนมัติ...', 'info'); this.startRealtimeSubscription(); } }, 30000); }
-            processAllData(latestData, snapshots) { this.latestData = latestData; this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH')); this.updateElementWithAnimation(this.elements.currentQueueNo, latestData.current_queue || '-'); this.updateElementWithAnimation(this.elements.currentCounter, latestData.current_counter || '-'); const counterHistory = this.processSnapshotsForCounters(snapshots); this.updateCounterDisplay(counterHistory); if (this.trackedQueue) { this.updateTrackingDisplays(); } }
-            processSnapshotsForCounters(snapshots) { if (!snapshots || snapshots.length === 0) return {}; const historyByCounter = {}; for (const snapshot of snapshots) { const counter = snapshot.current_counter; const queue = snapshot.current_queue; if (!counter || !queue) continue; if (!historyByCounter[counter]) { historyByCounter[counter] = { current: null, completed: [] }; } const history = historyByCounter[counter]; if (!history.current) { history.current = queue; } else { if (history.completed.length < 5 && !history.completed.some(c => c.queueNo === queue) && history.current !== queue) { history.completed.push({ queueNo: queue, completedAt: new Date(snapshot.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) }); } } } return historyByCounter; }
-            updateCounterDisplay(counterHistory) { const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b)); this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length); if (counterNumbers.length === 0) { this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`; return; } this.elements.counterDisplay.innerHTML = counterNumbers.map(counterNo => { const data = counterHistory[counterNo]; const completedQueuesHTML = data.completed.length > 0 ? data.completed.map(q => `<div class="completed-item"><span style="font-weight: bold; color: #2e7d32;">${q.queueNo}</span><span style="font-size: 0.8em; color: #666;">${q.completedAt}</span></div>`).join('') : `<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">ยังไม่มีคิวที่เสร็จสิ้น</div>`; return `<div class="counter-display-card"><h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3><div class="counter-current"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div><div class="counter-queue-no update-anim">${data.current || '-'}</div></div><div class="completed-list"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div><div style="max-height: 150px; overflow-y: auto;">${completedQueuesHTML}</div></div></div>`; }).join(''); }
-            getQueueScope(queueNo) { if (!queueNo || typeof queueNo !== 'string') return null; const cleaned = queueNo.trim(); if (cleaned.startsWith('99') && cleaned.length === 5) return '99'; if (cleaned.length === 4) return cleaned.substring(0, 1); return null; }
-            updateTrackingDisplays() { if (!this.trackedQueue || !this.latestData) { this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="text-align: center; color: #666;">กรุณาใส่เลขคิวที่ต้องการติดตามด้านบน</div>`; return; } const currentQueueNo = this.latestData.current_queue; if (!currentQueueNo) { this.elements.queueTrackingInfo.innerHTML = `<div class="queue-item" style="text-align: center; color: #f44336;">❌ ไม่สามารถดึงข้อมูลคิวปัจจุบันได้</div>`; return; } const allQueues = [{ queue_no: currentQueueNo, position: 0 }, ...(this.latestData.waiting_queues || [])]; const trackedItem = allQueues.find(q => q.queue_no === this.trackedQueue); const trackedNum = parseInt(String(this.trackedQueue).replace(/\D/g, ''), 10); const currentNum = parseInt(String(currentQueueNo).replace(/\D/g, ''), 10); const trackedScope = this.getQueueScope(this.trackedQueue); const currentScope = this.getQueueScope(currentQueueNo); let status = 'not_found'; let details = {}; if (trackedItem) { status = trackedItem.position === 0 ? 'current' : 'waiting'; details = { remaining: trackedItem.position, timeText: `ประมาณ ${trackedItem.estimated_wait || trackedItem.position * 3} นาที` }; } else if (trackedScope && currentScope && trackedScope !== currentScope) { status = 'scope_mismatch'; } else if (!isNaN(trackedNum) && !isNaN(currentNum)) { if (trackedNum < currentNum) { status = 'passed'; } else if (trackedNum > currentNum) { status = 'manual_calc'; details = { remaining: trackedNum - currentNum, timeText: `ประมาณ ${(trackedNum - currentNum) * 3} นาที` }; } } this.setQueueInfoHTML(this.elements.queueTrackingInfo, status, this.trackedQueue, details); this.setQueueInfoHTML(this.elements.trackedQueue, status, this.trackedQueue, details); }
-            setQueueInfoHTML(targetElement, status, queue, details = {}) { const { remaining = 0, timeText = '' } = details; const el = this.elements; if (targetElement === el.trackedQueue) { el.trackedQueue.classList.remove('near', 'current', 'passed'); switch (status) { case 'current': el.queuePosition.textContent = '🎯 กำลังให้บริการ'; el.queueEstimate.textContent = `ที่ช่อง ${this.latestData.current_counter || '-'}`; el.notificationStatus.textContent = '✅ ถึงคิวแล้ว!'; el.trackedQueue.classList.add('current'); this.triggerNotification('current'); break; case 'waiting': el.queuePosition.textContent = `เหลืออีก ${remaining} คิว`; el.queueEstimate.textContent = `${timeText} (จากระบบ)`; el.notificationStatus.textContent = '⏳ กำลังรอ'; if (remaining <= 3) { el.trackedQueue.classList.add('near'); el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว!'; this.triggerNotification('near', { remaining, timeText }); } else { if (this.lastNotificationState === 'near') this.lastNotificationState = null; } break; case 'passed': el.trackedQueue.classList.add('passed'); el.queuePosition.textContent = '🚫 คิวผ่านไปแล้ว'; el.queueEstimate.textContent = 'กรุณาติดต่อเจ้าหน้าที่'; el.notificationStatus.textContent = 'ตรวจสอบด่วน!'; break; case 'scope_mismatch': el.trackedQueue.classList.add('passed'); el.queuePosition.textContent = '🚫 คิวอยู่คนละประเภท'; el.queueEstimate.textContent = `ประเภทคิวไม่ตรงกัน`; el.notificationStatus.textContent = 'ข้อมูลไม่ถูกต้อง'; break; case 'manual_calc': el.queuePosition.textContent = `เหลือประมาณ ${remaining} คิว`; el.queueEstimate.textContent = `${timeText} (ประเมิน)`; el.notificationStatus.textContent = '⏳ กำลังรอ (ประเมิน)'; if (remaining <= 3) { el.trackedQueue.classList.add('near'); el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว! (ประเมิน)'; this.triggerNotification('near', { remaining, timeText }); } else { if (this.lastNotificationState === 'near') this.lastNotificationState = null; } break; default: el.queuePosition.textContent = 'ไม่พบคิวในรายการ'; el.queueEstimate.textContent = 'โปรดตรวจสอบเลขคิว'; el.notificationStatus.textContent = '❓ ไม่พบข้อมูล'; break; } } else { let html = ''; switch (status) { case 'current': html = `<div class="queue-item" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left-color: #4caf50; text-align: center;">🎯 คิว "${queue}" กำลังให้บริการอยู่!</div>`; break; case 'waiting': const icon = remaining <= 3 ? '⚠️' : '🔔'; const bgColor = remaining <= 3 ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)'; const borderColor = remaining <= 3 ? '#f44336' : '#ff9800'; html = `<div class="queue-item" style="background: ${bgColor}; border-left-color: ${borderColor};"><div style="text-align: center; width: 100%;"><div style="font-size: 1.4em; font-weight: bold;">${icon} คิว "${queue}"</div><div style="font-size: 1.8em; font-weight: bold; color: ${borderColor}; margin: 5px 0;">เหลือ ${remaining} คิว</div><div style="color: #666; font-size: 0.9em;">${timeText}</div></div></div>`; break; case 'passed': html = `<div class="queue-item" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63; text-align: center; flex-direction: column; align-items: center; gap: 5px; padding: 15px;"><div style="font-weight: bold; color: #c2185b;">🚫 คิว ${queue} ผ่านไปแล้ว</div><small style="color: #666;">กรุณาติดต่อเจ้าหน้าที่</small></div>`; break; case 'scope_mismatch': html = `<div class="queue-item" style="background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%); border-left-color: #e91e63; text-align: center;">🚫 คิวอยู่คนละประเภทกัน</div>`; break; case 'manual_calc': const manIcon = remaining <= 3 ? '⚠️' : '🔔'; const manBgColor = remaining <= 3 ? 'linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)' : 'linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)'; const manBorderColor = remaining <= 3 ? '#f44336' : '#ff9800'; html = `<div class="queue-item" style="background: ${manBgColor}; border-left-color: ${manBorderColor};"><div style="text-align: center; width: 100%;"><div style="font-size: 1.4em; font-weight: bold;">${manIcon} คิว "${queue}"</div><div style="font-size: 1.8em; font-weight: bold; color: ${manBorderColor}; margin: 5px 0;">เหลือประมาณ ${remaining} คิว</div><div style="color: #666; font-size: 0.9em;">${timeText} (ประเมิน)</div></div></div>`; break; default: html = `<div class="queue-item" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left-color: #ff9800; text-align: center;">❓ ไม่พบคิว "${queue}" ในรายการ<br><small>(อาจยังมาไม่ถึง)</small></div>`; break; } targetElement.innerHTML = html; } }
-                clearTracking() { this.trackedQueue = null; this.elements.trackedQueueContainer.style.display = 'none'; this.elements.queueNumber.value = ''; this.lastNotificationState = null; localStorage.removeItem('trackedQueue'); this.updateTrackingDisplays(); this.showAlert('❌ หยุดติดตามคิวแล้ว', 'info'); }
-                triggerNotification(type, details = {}) { const setting = type === 'current' ? 'notifyCurrent' : 'notifyNear'; if (!this.notificationSettings[setting] || this.lastNotificationState === type) return; this.playNotificationSound(type); const title = (type === 'current') ? '🎯 ถึงคิวแล้ว!' : '⚠️ ใกล้ถึงคิวแล้ว!'; const body = (type === 'current') ? `คิว ${this.trackedQueue} กำลังให้บริการที่ช่อง ${this.latestData.current_counter || '-'}` : `คิว ${this.trackedQueue} เหลืออีก ${details.remaining} คิว (${details.timeText})`; this.showBrowserNotification(title, body); this.showAlert(body, type === 'current' ? 'success' : 'warning'); this.lastNotificationState = type; }
-                playNotificationSound(type) { if (!this.notificationSettings.soundEnabled || !this.isAudioUnlocked) return; const audio = type === 'current' ? this.elements.currentQueueSound : this.elements.nearQueueSound; if (!audio) { console.error(`Cannot play sound: Audio element for '${type}' not found.`); return; } audio.currentTime = 0; audio.volume = this.notificationSettings.volume; audio.play().catch(e => console.error(`🔊 Sound play failed for '${type}':`, e)); }
-                updateConnectionStatus(status) { const card = this.elements.connectionCard; const text = this.elements.connectionStatus; card.classList.remove('connected'); switch (status) { case 'connected': text.textContent = 'เชื่อมต่อแล้ว'; card.classList.add('connected'); break; case 'reconnecting': text.textContent = 'กำลังเชื่อมต่อใหม่...'; break; case 'error': text.textContent = 'การเชื่อมต่อผิดพลาด'; break; case 'connecting': default: text.textContent = 'กำลังเชื่อมต่อ...'; break; } }
-                showNoDataMessage() { this.elements.currentQueueNo.textContent = '-'; this.elements.currentCounter.textContent = '-'; this.elements.counterDisplay.innerHTML = `<div style="text-align: center; padding: 40px; color: #f44336; grid-column: 1 / -1;">⚠️ ไม่สามารถโหลดข้อมูลได้</div>`; }
-                showBrowserNotification(title, body) { if ('Notification' in window && Notification.permission === 'granted') { new Notification(title, { body: body, icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><text y="20" font-size="20">🏢</text></svg>' }); } }
+                updateElementWithAnimation(element, newText) {
+                    if (element && element.textContent !== String(newText)) {
+                        element.textContent = newText;
+                        element.classList.add('update-anim');
+                        element.addEventListener('animationend', () => {
+                            element.classList.remove('update-anim');
+                        }, { once: true });
+                    }
+                }
+
+                bindEvents() {
+                    this.elements.trackBtn.addEventListener('click', () => this.trackQueue());
+                    this.elements.clearTrackBtn.addEventListener('click', () => this.clearTracking());
+                    this.elements.queueNumber.addEventListener('keypress', (e) => { if (e.key === 'Enter') this.trackQueue(); });
+                    
+                    const savedQueue = localStorage.getItem('trackedQueue');
+                    if (savedQueue) {
+                        this.elements.queueNumber.value = savedQueue;
+                        this.trackQueue(true); // Auto track without alerts
+                    }
+                }
+
+                trackQueue(isAutoTrack = false) {
+                    const queueNumber = this.elements.queueNumber.value.trim().toUpperCase();
+                    if (!queueNumber) { if (!isAutoTrack) this.showAlert('กรุณาใส่เลขคิว', 'warning'); return; }
+                    this.trackedQueue = queueNumber;
+                    this.elements.trackedQueueNumber.textContent = queueNumber;
+                    this.elements.trackedQueueContainer.style.display = 'block';
+                    localStorage.setItem('trackedQueue', queueNumber);
+                    if (!isAutoTrack) {
+                        this.showAlert(`🔔 เริ่มติดตามคิว ${queueNumber} แล้ว`, 'success');
+                    }
+                    if (this.latestData) {
+                        this.updateTrackedQueueStatus();
+                    }
+                }
+                
+                clearTracking() {
+                    this.trackedQueue = null;
+                    this.elements.trackedQueueContainer.style.display = 'none';
+                    this.elements.queueNumber.value = '';
+                    localStorage.removeItem('trackedQueue');
+                    this.showAlert('❌ หยุดติดตามคิวแล้ว', 'info');
+                }
+
+                async fetchInitialData() {
+                    try {
+                        this.updateConnectionStatus('connecting');
+                        const { data: latestStatusData, error: latestStatusError } = await supabase.from('current_queue_status').select('*').single();
+                        if (latestStatusError) throw latestStatusError;
+                        const { data: snapshotsData, error: snapshotsError } = await supabase.from('queue_snapshots').select('current_queue, current_counter, created_at').not('current_counter', 'is', null).order('created_at', { ascending: false }).limit(100);
+                        if (snapshotsError) throw snapshotsError;
+                        
+                        this.lastSuccessfulFetch = Date.now();
+                        this.processAllData(latestStatusData, snapshotsData);
+                        this.updateConnectionStatus('connected');
+                    } catch (error) {
+                        console.error('Error fetching initial data:', error);
+                        this.updateConnectionStatus('error');
+                        this.showNoDataMessage();
+                    }
+                }
+
+                processAllData(latestData, snapshots) {
+                    this.latestData = latestData;
+                    this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH'));
+                    const counterHistory = this.processSnapshotsForCounters(snapshots);
+                    this.updateCounterDisplay(counterHistory);
+                    if (this.trackedQueue) {
+                        this.updateTrackedQueueStatus();
+                    }
+                }
+                
+                updateTrackedQueueStatus() {
+                    if (!this.trackedQueue || !this.latestData || !this.latestData.current_queue) {
+                        return;
+                    }
+                    
+                    const { current_queue: currentQueueNo, waiting_queues } = this.latestData;
+                    const allQueues = [{ queue_no: currentQueueNo, position: 0 }, ...(waiting_queues || [])];
+                    const trackedItem = allQueues.find(q => q.queue_no === this.trackedQueue);
+                    
+                    const trackedNum = parseInt(String(this.trackedQueue).replace(/\D/g, ''), 10);
+                    const currentNum = parseInt(String(currentQueueNo).replace(/\D/g, ''), 10);
+                    const trackedScope = this.getQueueScope(this.trackedQueue);
+                    const currentScope = this.getQueueScope(currentQueueNo);
+
+                    let status = 'not_found';
+                    let details = {};
+
+                    if (trackedItem) {
+                        status = trackedItem.position === 0 ? 'current' : 'waiting';
+                        details = { remaining: trackedItem.position, timeText: `ประมาณ ${trackedItem.estimated_wait || trackedItem.position * 3} นาที` };
+                    } else if (trackedScope && currentScope && trackedScope !== currentScope) {
+                        status = 'scope_mismatch';
+                    } else if (!isNaN(trackedNum) && !isNaN(currentNum)) {
+                        if (trackedNum < currentNum) {
+                            status = 'passed';
+                        } else if (trackedNum > currentNum) {
+                            status = 'manual_calc';
+                            details = { remaining: trackedNum - currentNum, timeText: `ประมาณ ${(trackedNum - currentNum) * 3} นาที` };
+                        }
+                    }
+                    
+                    this.setTrackedQueueHTML(status, details);
+                }
+                
+                setTrackedQueueHTML(status, details = {}) {
+                    const { remaining = 0, timeText = '' } = details;
+                    const el = this.elements;
+                    el.trackedQueue.classList.remove('near', 'current', 'passed');
+                    
+                    switch (status) {
+                        case 'current':
+                            el.queuePosition.textContent = '🎯 กำลังให้บริการ';
+                            el.queueEstimate.textContent = `ที่ช่อง ${this.latestData.current_counter || '-'}`;
+                            el.notificationStatus.textContent = '✅ ถึงคิวแล้ว!';
+                            el.trackedQueue.classList.add('current');
+                            break;
+                        case 'waiting':
+                            el.queuePosition.textContent = `เหลืออีก ${remaining} คิว`;
+                            el.queueEstimate.textContent = `${timeText} (จากระบบ)`;
+                            el.notificationStatus.textContent = '⏳ กำลังรอ';
+                            if (remaining <= 3) {
+                                el.trackedQueue.classList.add('near');
+                                el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว!';
+                            }
+                            break;
+                        case 'passed':
+                            el.trackedQueue.classList.add('passed');
+                            el.queuePosition.textContent = '🚫 คิวผ่านไปแล้ว';
+                            el.queueEstimate.textContent = 'กรุณาติดต่อเจ้าหน้าที่';
+                            el.notificationStatus.textContent = 'ตรวจสอบด่วน!';
+                            break;
+                        case 'scope_mismatch':
+                            el.trackedQueue.classList.add('passed');
+                            el.queuePosition.textContent = '🚫 คิวอยู่คนละประเภท';
+                            el.queueEstimate.textContent = `ประเภทคิวไม่ตรงกัน`;
+                            el.notificationStatus.textContent = 'ข้อมูลไม่ถูกต้อง';
+                            break;
+                        case 'manual_calc':
+                            el.queuePosition.textContent = `เหลือประมาณ ${remaining} คิว`;
+                            el.queueEstimate.textContent = `${timeText} (ประเมิน)`;
+                            el.notificationStatus.textContent = '⏳ กำลังรอ (ประเมิน)';
+                            if (remaining <= 3) {
+                                el.trackedQueue.classList.add('near');
+                                el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว! (ประเมิน)';
+                            }
+                            break;
+                        default: // not_found
+                            el.queuePosition.textContent = 'ไม่พบคิวในรายการ';
+                            el.queueEstimate.textContent = 'โปรดตรวจสอบเลขคิว';
+                            el.notificationStatus.textContent = '❓ ไม่พบข้อมูล';
+                            break;
+                    }
+                }
+
+                // --- All other helper functions are correct ---
+                getQueueScope(queueNo) { if (!queueNo || typeof queueNo !== 'string') return null; const cleaned = queueNo.trim(); if (cleaned.startsWith('99') && cleaned.length === 5) return '99'; if (cleaned.length === 4) return cleaned.substring(0, 1); return null; }
+                processSnapshotsForCounters(snapshots) { if (!snapshots || snapshots.length === 0) return {}; const historyByCounter = {}; for (const snapshot of snapshots) { const counter = snapshot.current_counter; const queue = snapshot.current_queue; if (!counter || !queue) continue; if (!historyByCounter[counter]) { historyByCounter[counter] = { current: null, completed: [] }; } const history = historyByCounter[counter]; if (!history.current) { history.current = queue; } else { if (history.completed.length < 5 && !history.completed.some(c => c.queueNo === queue) && history.current !== queue) { history.completed.push({ queueNo: queue, completedAt: new Date(snapshot.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) }); } } } return historyByCounter; }
+                updateCounterDisplay(counterHistory) { const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b)); this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length); if (counterNumbers.length === 0) { this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`; return; } this.elements.counterDisplay.innerHTML = counterNumbers.map(counterNo => { const data = counterHistory[counterNo]; const completedQueuesHTML = data.completed.length > 0 ? data.completed.map(q => `<div class="completed-item"><span style="font-weight: bold; color: #2e7d32;">${q.queueNo}</span><span style="font-size: 0.8em; color: #666;">${q.completedAt}</span></div>`).join('') : `<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">ยังไม่มีคิวที่เสร็จสิ้น</div>`; return `<div class="counter-display-card"><h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3><div class="counter-current"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div><div class="counter-queue-no update-anim">${data.current || '-'}</div></div><div class="completed-list"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div><div style="max-height: 150px; overflow-y: auto;">${completedQueuesHTML}</div></div></div>`; }).join(''); }
+                updateConnectionStatus(status) { const card = this.elements.connectionCard; const text = this.elements.connectionStatus; if (card && text) { card.classList.remove('connected'); switch (status) { case 'connected': text.textContent = 'เชื่อมต่อแล้ว'; card.classList.add('connected'); break; case 'reconnecting': text.textContent = 'กำลังเชื่อมต่อใหม่...'; break; case 'error': text.textContent = 'การเชื่อมต่อผิดพลาด'; break; case 'connecting': default: text.textContent = 'กำลังเชื่อมต่อ...'; break; } } }
+                showNoDataMessage() { const display = this.elements.counterDisplay; if(display) display.innerHTML = `<div style="text-align: center; padding: 40px; color: #f44336; grid-column: 1 / -1;">⚠️ ไม่สามารถโหลดข้อมูลได้</div>`; }
                 showAlert(message, type = 'success') { if (!this.elements.alertArea) return; const alertDiv = document.createElement('div'); alertDiv.className = `alert alert-${type}`; alertDiv.textContent = message; this.elements.alertArea.innerHTML = ''; this.elements.alertArea.appendChild(alertDiv); setTimeout(() => { if (alertDiv) { alertDiv.style.opacity = '0'; setTimeout(() => alertDiv.remove(), 300); } }, 5000); }
+                startRealtimeSubscription() { if (this.subscription) { supabase.removeChannel(this.subscription); this.subscription = null; } this.updateConnectionStatus('connecting'); console.log('🔄 Attempting to subscribe...'); this.subscription = supabase.channel('queue_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, () => { console.log('📡 Real-time update received!'); this.fetchInitialData(); }).subscribe((status, err) => { switch (status) { case 'SUBSCRIBED': console.log('✅ Successfully subscribed!'); this.updateConnectionStatus('connected'); clearTimeout(this.reconnectTimer); this.reconnectAttempts = 0; this.fetchInitialData(); break; case 'TIMED_OUT': case 'CLOSED': case 'CHANNEL_ERROR': console.warn(`⚠️ Subscription status: ${status}.`, err || ''); this.updateConnectionStatus('reconnecting'); this.handleReconnect(); break; } }); }
+                handleReconnect() { clearTimeout(this.reconnectTimer); this.reconnectAttempts++; const delay = Math.min(1000 * (2 ** this.reconnectAttempts), 30000); console.log(`Will reconnect in ${delay / 1000}s...`); this.reconnectTimer = setTimeout(() => { this.startRealtimeSubscription(); }, delay); }
+                startWatchdog() { this.watchdogTimer = setInterval(() => { const timeSinceLastFetch = Date.now() - this.lastSuccessfulFetch; if (timeSinceLastFetch > 90000) { console.warn(`🐶 Watchdog: Stale connection detected. Forcing reconnect.`); this.showAlert('การเชื่อมต่อค้าง, กำลังเชื่อมต่อใหม่อัตโนมัติ...', 'info'); this.startRealtimeSubscription(); } }, 30000); }
             }
 
-            // Start the application only when the DOM is fully loaded.
+            // Start the application after the DOM is fully loaded.
             const app = new QueueMonitor();
             app.init();
-
-        }
+        })();
     </script>
 </body>
 </html>
