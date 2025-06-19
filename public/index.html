@@ -14,33 +14,10 @@
         .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); overflow: hidden; }
         .header { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; padding: 30px; text-align: center; }
         .header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        
-        /* [NEW] Style for the most recent queue panel */
-        .latest-call-panel {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 25px;
-            margin: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3);
-        }
-        .latest-call-title {
-            font-size: 1.2em;
-            font-weight: 600;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-        .latest-call-number {
-            font-size: 4.5em;
-            font-weight: bold;
-            line-height: 1.1;
-        }
-        .latest-call-counter {
-            font-size: 1.2em;
-            margin-top: 5px;
-        }
-
+        .latest-call-panel { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; margin: 30px; border-radius: 15px; text-align: center; box-shadow: 0 10px 20px rgba(118, 75, 162, 0.3); }
+        .latest-call-title { font-size: 1.2em; font-weight: 600; opacity: 0.9; margin-bottom: 10px; }
+        .latest-call-number { font-size: 4.5em; font-weight: bold; line-height: 1.1; }
+        .latest-call-counter { font-size: 1.2em; margin-top: 5px; }
         .status-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding: 30px; }
         .status-card { background: #f9f9f9; border: 1px solid #eee; padding: 20px; border-radius: 15px; text-align: center; }
         .status-card.connected .status-value { color: #4caf50; }
@@ -81,44 +58,13 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🏢 ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</h1>
-            <p>สถานะช่องบริการและการติดตามคิว  Beta ระบบแจ้งเตือนใช้ไม่ได้ ; w ;</p>
-        </div>
-
-        <!-- [NEW] Display for the latest called queue -->
-        <div class="latest-call-panel">
-            <div class="latest-call-title">คิวที่เรียกล่าสุด</div>
-            <div class="latest-call-number" id="latestCalledQueueNo">-</div>
-            <div class="latest-call-counter" id="latestCalledCounterNo">ณ ช่องบริการ -</div>
-        </div>
-
+        <div class="header"><h1>🏢 ระบบติดตามคิวสำนักงานที่ดิน จ.นครสวรรค์</h1><p>สถานะช่องบริการและการติดตามคิว</p></div>
+        <div class="latest-call-panel"><div class="latest-call-title">คิวที่เรียกล่าสุด</div><div class="latest-call-number" id="latestCalledQueueNo">-</div><div class="latest-call-counter" id="latestCalledCounterNo">ณ ช่องบริการ -</div></div>
         <div class="alert-area-container" id="alertArea"></div>
-
-        <div class="notification-panel">
-            <h2>🔔 ติดตามคิวของคุณ</h2>
-            <div class="notification-input"><label>เลขคิวของคุณ:</label><input type="text" id="queueNumber" class="queue-input" placeholder="เช่น 1039"><button class="btn btn-warning" id="trackBtn">🔔 ติดตามคิว</button><button class="btn btn-secondary" id="clearTrackBtn">❌ ลบการติดตาม</button></div>
-            <div id="trackedQueueContainer" style="display: none;"><div class="tracked-queue" id="trackedQueue"><div class="queue-status"><div class="queue-info"><div class="queue-number" id="trackedQueueNumber">-</div><div class="queue-details"><div id="queuePosition">รอตรวจสอบ...</div><div id="queueEstimate">กำลังคำนวณ...</div></div></div><div id="notificationStatus">🔔 กำลังติดตาม</div></div></div></div>
-        </div>
-
-        <div>
-            <h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2>
-            <div id="counterDisplay" class="counter-display-grid"><div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">กำลังโหลดข้อมูลช่องบริการ...</div></div>
-        </div>
-        
-        <!-- [MOVED] System Status Panel is now at the bottom -->
-        <div style="border-top: 1px solid #eee; margin-top: 20px;">
-            <h2 style="padding: 30px 30px 0 30px; text-align: center; color: #888; font-weight: 500;">สถานะระบบ</h2>
-            <div class="status-panel">
-                <div class="status-card" id="connectionCard"><div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div><div class="status-label">🔗 สถานะการเชื่อมต่อ</div></div>
-                <div class="status-card"><div class="status-value" id="lastUpdate">-</div><div class="status-label">⏰ อัพเดตล่าสุด</div></div>
-                <div class="status-card"><div class="status-value" id="counterCount">0</div><div class="status-label">🪟 ช่องบริการ</div></div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>ระบบคิวออนไลน์ Design โดย JinKung </p>
-        </div>
+        <div class="notification-panel"><h2>🔔 ติดตามคิวของคุณ</h2><div class="notification-input"><label>เลขคิวของคุณ:</label><input type="text" id="queueNumber" class="queue-input" placeholder="เช่น 1039"><button class="btn btn-warning" id="trackBtn">🔔 ติดตามคิว</button><button class="btn btn-secondary" id="clearTrackBtn">❌ ลบการติดตาม</button></div><div id="trackedQueueContainer" style="display: none;"><div class="tracked-queue" id="trackedQueue"><div class="queue-status"><div class="queue-info"><div class="queue-number" id="trackedQueueNumber">-</div><div class="queue-details"><div id="queuePosition">รอตรวจสอบ...</div><div id="queueEstimate">กำลังคำนวณ...</div></div></div><div id="notificationStatus">🔔 กำลังติดตาม</div></div></div></div></div>
+        <div><h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2><div id="counterDisplay" class="counter-display-grid"><div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">กำลังโหลดข้อมูลช่องบริการ...</div></div></div>
+        <div style="border-top: 1px solid #eee; margin-top: 20px;"><h2 style="padding: 30px 30px 0 30px; text-align: center; color: #888; font-weight: 500;">สถานะระบบ</h2><div class="status-panel"><div class="status-card" id="connectionCard"><div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div><div class="status-label">🔗 สถานะการเชื่อมต่อ</div></div><div class="status-card"><div class="status-value" id="lastUpdate">-</div><div class="status-label">⏰ อัพเดตล่าสุด</div></div><div class="status-card"><div class="status-value" id="counterCount">0</div><div class="status-label">🪟 ช่องบริการ</div></div></div></div>
+        <div class="footer"><p>Queue Monitor v18 - Counter-Based Logic</p></div>
     </div>
 
     <script>
@@ -139,17 +85,12 @@
                         this.bindEvents();
                         this.startRealtimeSubscription();
                         this.scheduleAutoRefresh();
-                        console.log('✅ Queue Monitor (v17 - Improved Layout) Initialized');
+                        console.log('✅ Queue Monitor (v18) Initialized');
                     }
                 }
 
                 initializeElements() {
-                    const ids = [
-                        'alertArea', 'connectionCard', 'connectionStatus', 'lastUpdate', 'counterCount', 
-                        'queueNumber', 'trackBtn', 'clearTrackBtn', 'trackedQueueContainer', 'trackedQueue', 
-                        'trackedQueueNumber', 'queuePosition', 'queueEstimate', 'notificationStatus', 
-                        'counterDisplay', 'latestCalledQueueNo', 'latestCalledCounterNo' // [ADDED] New elements
-                    ];
+                    const ids = ['alertArea', 'connectionCard', 'connectionStatus', 'lastUpdate', 'counterCount', 'queueNumber', 'trackBtn', 'clearTrackBtn', 'trackedQueueContainer', 'trackedQueue', 'trackedQueueNumber', 'queuePosition', 'queueEstimate', 'notificationStatus', 'counterDisplay', 'latestCalledQueueNo', 'latestCalledCounterNo'];
                     for (const id of ids) {
                         const el = document.getElementById(id);
                         if (!el) { console.error(`Fatal Error: Element '${id}' not found.`); return false; }
@@ -173,87 +114,137 @@
                     }
                 }
 
-                trackQueue(isAutoTrack = false) {
+                // --- [REBUILT] trackQueue is now the main controller ---
+                async trackQueue(isAutoTrack = false) {
                     const queueNumber = this.elements.queueNumber.value.trim();
-                    if (!queueNumber) { if (!isAutoTrack) this.showAlert('กรุณาใส่เลขคิว', 'warning'); return; }
+                    if (!queueNumber) {
+                        if (!isAutoTrack) this.showAlert('กรุณาใส่เลขคิว', 'warning');
+                        return;
+                    }
+
                     this.trackedQueue = queueNumber;
                     this.elements.trackedQueueNumber.textContent = queueNumber;
                     this.elements.trackedQueueContainer.style.display = 'block';
                     localStorage.setItem('trackedQueue', queueNumber);
-                    if (!isAutoTrack) { this.showAlert(`🔔 เริ่มติดตามคิว ${queueNumber} แล้ว`, 'success'); }
-                    if (this.latestData) { this.updateTrackedQueueStatus(); }
+                    
+                    if (!isAutoTrack) {
+                        this.showAlert(`🔔 กำลังตรวจสอบคิว ${queueNumber}...`, 'info');
+                    }
+                    
+                    // --- Start New Logic ---
+                    const counterId = this.getCounterIdFromQueue(queueNumber);
+                    
+                    if (counterId === null) {
+                        this.setTrackedQueueHTML('invalid_format');
+                        return;
+                    }
+
+                    try {
+                        // Find the highest queue number for that specific counter
+                        const { data, error } = await supabase
+                            .from('queue_snapshots')
+                            .select('current_queue')
+                            .eq('current_counter', counterId)
+                            .order('current_queue', { ascending: false })
+                            .limit(1);
+
+                        if (error) throw error;
+
+                        if (!data || data.length === 0) {
+                            this.setTrackedQueueHTML('no_data_for_scope');
+                            return;
+                        }
+                        
+                        const latestCalledInScope = data[0].current_queue;
+                        const result = this.getQueueInfo(queueNumber, latestCalledInScope);
+                        this.setTrackedQueueHTML(result.status, { remaining: result.remaining, latest: latestCalledInScope });
+
+                    } catch (error) {
+                        console.error("Error fetching latest queue for counter:", error);
+                        this.showAlert("ไม่สามารถตรวจสอบคิวได้ในขณะนี้", "warning");
+                        this.setTrackedQueueHTML('error');
+                    }
+                }
+
+                getCounterIdFromQueue(queueNo) {
+                    const num = parseInt(String(queueNo).trim(), 10);
+                    if (isNaN(num)) return null;
+                    if (num >= 1001 && num <= 1999) return 1;
+                    if (num >= 2001 && num <= 2999) return 2;
+                    if (num >= 3001 && num <= 3999) return 3;
+                    if (num >= 4001 && num <= 4999) return 4;
+                    if (num >= 5001 && num <= 5999) return 5;
+                    if (num >= 6001 && num <= 6999) return 6;
+                    if (num >= 7001 && num <= 7999) return 7;
+                    if (num >= 8001 && num <= 8999) return 8;
+                    if (num >= 9001 && num <= 9999) return 9;
+                    if (num >= 10001 && num <= 10999) return 10;
+                    return null; // Not in any defined range
+                }
+                
+                getQueueInfo(trackedQueue, latestCalledQueueInScope) {
+                    const trackedNum = parseInt(trackedQueue, 10);
+                    const latestNum = parseInt(latestCalledQueueInScope, 10);
+                    
+                    if (trackedNum < latestNum) return { status: 'passed' };
+                    if (trackedNum === latestNum) return { status: 'current' };
+                    
+                    return {
+                        status: 'waiting',
+                        remaining: trackedNum - latestNum
+                    };
+                }
+                
+                setTrackedQueueHTML(status, details = {}) {
+                    const { remaining = 0, latest = 'N/A' } = details;
+                    const el = this.elements;
+                    el.trackedQueue.classList.remove('near', 'current', 'passed');
+                    switch (status) {
+                        case 'current':
+                            el.queuePosition.textContent = '🎯 คาดว่ากำลังให้บริการ';
+                            el.queueEstimate.textContent = `(คิวล่าสุดที่เรียกคือ ${latest})`;
+                            el.notificationStatus.textContent = '✅ ถึงคิวแล้ว!';
+                            el.trackedQueue.classList.add('current');
+                            break;
+                        case 'waiting':
+                            el.queuePosition.textContent = `เหลืออีก ${remaining} คิว`;
+                            el.queueEstimate.textContent = `(คำนวณจากคิวล่าสุด ${latest})`;
+                            el.notificationStatus.textContent = '⏳ กำลังรอ';
+                            if (remaining <= 3) {
+                                el.trackedQueue.classList.add('near');
+                                el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว!';
+                            }
+                            break;
+                        case 'passed':
+                            el.trackedQueue.classList.add('passed');
+                            el.queuePosition.textContent = '🚫 คิวผ่านไปแล้ว';
+                            el.queueEstimate.textContent = `(คิวล่าสุดที่เรียกคือ ${latest})`;
+                            el.notificationStatus.textContent = 'ตรวจสอบด่วน!';
+                            break;
+                        case 'no_data_for_scope':
+                             el.trackedQueue.classList.add('passed');
+                            el.queuePosition.textContent = '❓ ยังไม่มีข้อมูล';
+                            el.queueEstimate.textContent = 'สำหรับคิวประเภทนี้ในวันนี้';
+                            el.notificationStatus.textContent = 'ไม่พบข้อมูล';
+                            break;
+                        case 'invalid_format':
+                        default:
+                            el.trackedQueue.classList.add('passed');
+                            el.queuePosition.textContent = '❓ รูปแบบคิวไม่ถูกต้อง';
+                            el.queueEstimate.textContent = 'โปรดตรวจสอบเลขคิว';
+                            el.notificationStatus.textContent = 'ผิดพลาด';
+                            break;
+                    }
                 }
                 
                 clearTracking() { this.trackedQueue = null; this.elements.trackedQueueContainer.style.display = 'none'; this.elements.queueNumber.value = ''; localStorage.removeItem('trackedQueue'); this.showAlert('❌ หยุดติดตามคิวแล้ว', 'info'); }
-
-                async fetchInitialData() {
-                    try {
-                        this.updateConnectionStatus('connecting');
-                        const { data: latestStatusData, error: latestStatusError } = await supabase.from('latest_status').select('*').eq('id', 1).single();
-                        if (latestStatusError) throw latestStatusError;
-                        
-                        const { data: snapshotsData, error: snapshotsError } = await supabase.from('queue_snapshots').select('current_queue, current_counter, created_at').not('current_counter', 'is', null).order('created_at', { ascending: false }).limit(100);
-                        if (snapshotsError) throw snapshotsError;
-                        
-                        this.processAllData(latestStatusData, snapshotsData);
-                        this.updateConnectionStatus('connected');
-                    } catch (error) { console.error('Error fetching initial data:', error); this.updateConnectionStatus('error'); }
-                }
-
-                processAllData(latestData, snapshots) {
-                    this.latestData = latestData;
-                    
-                    // [MODIFIED] Update the new latest-call panel first
-                    if (snapshots && snapshots.length > 0) {
-                        const latestCall = snapshots[0];
-                        this.updateElementWithAnimation(this.elements.latestCalledQueueNo, latestCall.current_queue || '-');
-                        this.updateElementWithAnimation(this.elements.latestCalledCounterNo, `ณ ช่องบริการ ${latestCall.current_counter || '-'}`);
-                    }
-                    
-                    this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH'));
-                    
-                    const counterHistory = this.processSnapshotsForCounters(snapshots);
-                    this.updateCounterDisplay(counterHistory);
-
-                    if (this.trackedQueue) { this.updateTrackedQueueStatus(); }
-                }
-
-                // [REBUILT FUNCTION] This logic is now correct.
-                processSnapshotsForCounters(snapshots) {
-                    if (!snapshots || snapshots.length === 0) return {};
-                    const groupedByCounter = snapshots.reduce((acc, snapshot) => {
-                        const counter = snapshot.current_counter;
-                        if (!counter) return acc;
-                        if (!acc[counter]) acc[counter] = [];
-                        if (!acc[counter].find(item => item.queueNo === snapshot.current_queue)) {
-                             acc[counter].push({ queueNo: snapshot.current_queue, time: snapshot.created_at });
-                        }
-                        return acc;
-                    }, {});
-
-                    const finalHistory = {};
-                    for (const counterNo in groupedByCounter) {
-                        const history = groupedByCounter[counterNo];
-                        finalHistory[counterNo] = {
-                            current: history[0].queueNo,
-                            completed: history.slice(1, 6).map(snap => ({
-                                queueNo: snap.queueNo,
-                                completedAt: new Date(snap.time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
-                            }))
-                        };
-                    }
-                    return finalHistory;
-                }
-                
-                // All other functions from here on are correct.
-                updateCounterDisplay(counterHistory) { const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b)); this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length); if (counterNumbers.length === 0) { this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`; return; } this.elements.counterDisplay.innerHTML = counterNumbers.map(counterNo => { const data = counterHistory[counterNo]; const completedQueuesHTML = data.completed.length > 0 ? data.completed.map(q => `<div class="completed-item"><span style="font-weight: bold; color: #2e7d32;">${q.queueNo}</span><span style="font-size: 0.8em; color: #666;">${q.completedAt}</span></div>`).join('') : `<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">ยังไม่มีคิวที่เสร็จสิ้น</div>`; return `<div class="counter-display-card"><h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3><div class="counter-current"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div><div class="counter-queue-no update-anim">${data.current || '-'}</div></div><div class="completed-list"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div><div style="max-height: 150px; overflow-y: auto;">${completedQueuesHTML}</div></div></div>`; }).join(''); }
-                getQueueScope(queueNo) { if (!queueNo || typeof queueNo !== 'string') return null; const cleaned = queueNo.trim(); if (cleaned.startsWith('99') && cleaned.length === 5) return '99'; if (cleaned.length === 4) return cleaned.substring(0, 1); return null; }
-                updateTrackedQueueStatus() { if (!this.trackedQueue || !this.latestData || !this.latestData.current_queue) return; const { current_queue: currentQueueNo } = this.latestData; const result = this.getQueueInfo(this.trackedQueue, currentQueueNo); this.setTrackedQueueHTML(result.status, { remaining: result.remaining }); }
-                getQueueInfo(trackedQueue, currentQueueNo) { const normalize = (q) => { if (!q || typeof q !== 'string') return null; let numStr = q.trim(); if (/^\d{4}$/.test(numStr)) { numStr = '0' + numStr; } if (!/^\d{5}$/.test(numStr)) { return null; } return { full: numStr, service: numStr.substring(0, 2), sequence: parseInt(numStr.substring(2), 10) }; }; const tracked = normalize(trackedQueue); const current = normalize(currentQueueNo); if (!tracked || !current) return { status: 'invalid_format' }; if (tracked.service !== current.service) return { status: 'scope_mismatch' }; if (tracked.sequence < current.sequence) return { status: 'passed' }; if (tracked.sequence === current.sequence) return { status: 'current' }; return { status: 'waiting', remaining: tracked.sequence - current.sequence }; }
-                setTrackedQueueHTML(status, details = {}) { const { remaining = 0 } = details; const el = this.elements; el.trackedQueue.classList.remove('near', 'current', 'passed'); switch (status) { case 'current': el.queuePosition.textContent = '🎯 กำลังให้บริการ'; el.queueEstimate.textContent = `ที่ช่อง ${this.latestData.current_counter || '-'}`; el.notificationStatus.textContent = '✅ ถึงคิวแล้ว!'; el.trackedQueue.classList.add('current'); break; case 'waiting': el.queuePosition.textContent = `เหลืออีก ${remaining} คิว`; el.queueEstimate.textContent = `(คำนวณจากหมายเลข)`; el.notificationStatus.textContent = '⏳ กำลังรอ'; if (remaining <= 3) { el.trackedQueue.classList.add('near'); el.notificationStatus.textContent = '⚠️ ใกล้ถึงแล้ว!'; } break; case 'passed': el.trackedQueue.classList.add('passed'); el.queuePosition.textContent = '🚫 คิวผ่านไปแล้ว'; el.queueEstimate.textContent = 'กรุณาติดต่อเจ้าหน้าที่'; el.notificationStatus.textContent = 'ตรวจสอบด่วน!'; break; case 'scope_mismatch': el.trackedQueue.classList.add('passed'); el.queuePosition.textContent = '🚫 คิวอยู่คนละประเภทบริการ'; el.queueEstimate.textContent = `กรุณาตรวจสอบประเภทคิว`; el.notificationStatus.textContent = 'ข้อมูลไม่ถูกต้อง'; break; default: el.trackedQueue.classList.add('passed'); el.queuePosition.textContent = '❓ รูปแบบคิวไม่ถูกต้อง'; el.queueEstimate.textContent = 'โปรดตรวจสอบ (ต้องเป็นเลข 4-5 หลัก)'; el.notificationStatus.textContent = 'ผิดพลาด'; break; } }
+                async fetchInitialData() { try { this.updateConnectionStatus('connecting'); const { data: latestStatusData, error: latestStatusError } = await supabase.from('latest_status').select('*').eq('id', 1).single(); if (latestStatusError) throw latestStatusError; const { data: snapshotsData, error: snapshotsError } = await supabase.from('queue_snapshots').select('current_queue, current_counter, created_at').not('current_counter', 'is', null).order('created_at', { ascending: false }).limit(100); if (snapshotsError) throw snapshotsError; this.processAllData(latestStatusData, snapshotsData); this.updateConnectionStatus('connected'); } catch (error) { console.error('Error fetching initial data:', error); this.updateConnectionStatus('error'); } }
+                processAllData(latestData, snapshots) { this.latestData = latestData; if (snapshots && snapshots.length > 0) { const latestCall = snapshots[0]; this.updateElementWithAnimation(this.elements.latestCalledQueueNo, latestCall.current_queue || '-'); this.updateElementWithAnimation(this.elements.latestCalledCounterNo, `ณ ช่องบริการ ${latestCall.current_counter || '-'}`); } this.updateElementWithAnimation(this.elements.lastUpdate, new Date(latestData.last_updated).toLocaleTimeString('th-TH')); const counterHistory = this.processSnapshotsForCounters(snapshots); this.updateCounterDisplay(counterHistory); if (this.trackedQueue) { this.trackQueue(true); } }
+                processSnapshotsForCounters(snapshots) { if (!snapshots || snapshots.length === 0) return {}; const groupedByCounter = snapshots.reduce((acc, snapshot) => { const counter = snapshot.current_counter; if (!counter) return acc; if (!acc[counter]) acc[counter] = []; if (!acc[counter].find(item => item.queueNo === snapshot.current_queue)) { acc[counter].push({ queueNo: snapshot.current_queue, time: snapshot.created_at }); } return acc; }, {}); const finalHistory = {}; for (const counterNo in groupedByCounter) { const history = groupedByCounter[counterNo]; finalHistory[counterNo] = { current: history[0].queueNo, completed: history.slice(1, 6).map(snap => ({ queueNo: snap.queueNo, completedAt: new Date(snap.time).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) })) }; } return finalHistory; }
+                updateCounterDisplay(counterHistory) { const counterNumbers = Object.keys(counterHistory).sort((a, b) => parseInt(a) - parseInt(b)); this.updateElementWithAnimation(this.elements.counterCount, counterNumbers.length); if (counterNumbers.length === 0) { this.elements.counterDisplay.innerHTML = `<div style="text-align: center; color: #999; grid-column: 1 / -1;">ยังไม่มีข้อมูลช่องบริการ</div>`; return; } this.elements.counterDisplay.innerHTML = counterNumbers.map(counterNo => { const data = counterHistory[counterNo]; const completedQueuesHTML = data.completed.length > 0 ? data.completed.map(q => `<div class="completed-item"><span style="font-weight: bold; color: #2e7d32;">${q.queueNo}</span><span style="font-size: 0.8em; color: #666;">${q.completedAt}</span></div>`).join('') : `<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">ยังไม่มีคิวที่เสร็จสิ้น</div>`; return `<div class="counter-display-card"><h3 style="color: #1976D2; margin-bottom: 15px;">🪟 ช่องบริการ ${counterNo}</h3><div class="counter-current"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">🎯 กำลังให้บริการ</div><div class="counter-queue-no update-anim">${data.current || '-'}</div></div><div class.completed-list"><div style="font-size: 0.9em; color: #666; margin-bottom: 8px;">✅ คิวที่ผ่านแล้ว</div><div style="max-height: 150px; overflow-y: auto;">${completedQueuesHTML}</div></div></div>`; }).join(''); }
                 updateConnectionStatus(status) { const card = this.elements.connectionCard; const text = this.elements.connectionStatus; if (card && text) { card.classList.remove('connected'); switch (status) { case 'connected': text.textContent = 'เชื่อมต่อแล้ว'; card.classList.add('connected'); break; case 'reconnecting': text.textContent = 'กำลังเชื่อมต่อใหม่...'; break; case 'error': text.textContent = 'การเชื่อมต่อผิดพลาด'; break; case 'connecting': default: text.textContent = 'กำลังเชื่อมต่อ...'; break; } } }
                 showAlert(message, type = 'success') { if (!this.elements.alertArea) return; const alertDiv = document.createElement('div'); alertDiv.className = `alert alert-${type}`; alertDiv.textContent = message; this.elements.alertArea.innerHTML = ''; this.elements.alertArea.appendChild(alertDiv); setTimeout(() => { if (alertDiv) { alertDiv.style.opacity = '0'; setTimeout(() => alertDiv.remove(), 300); } }, 5000); }
-                startRealtimeSubscription() { if (this.subscription) { supabase.removeChannel(this.subscription); this.subscription = null; } this.updateConnectionStatus('connecting'); console.log('🔄 Attempting to subscribe...'); this.subscription = supabase.channel('queue_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, () => { console.log('📡 Real-time update received!'); this.fetchInitialData(); }).subscribe((status, err) => { switch (status) { case 'SUBSCRIBED': console.log('✅ Successfully subscribed!'); this.updateConnectionStatus('connected'); this.fetchInitialData(); break; case 'TIMED_OUT': case 'CLOSED': case 'CHANNEL_ERROR': console.warn(`⚠️ Subscription status: ${status}.`, err || ''); this.updateConnectionStatus('reconnecting'); break; } }); }
+                startRealtimeSubscription() { if (this.subscription) { supabase.removeChannel(this.subscription); this.subscription = null; } this.updateConnectionStatus('connecting'); this.subscription = supabase.channel('queue_updates').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, () => { console.log('📡 Real-time update received!'); this.fetchInitialData(); }).subscribe((status) => { if (status === 'SUBSCRIBED') { console.log('✅ Successfully subscribed!'); this.updateConnectionStatus('connected'); this.fetchInitialData(); } }); }
             }
 
             const app = new QueueMonitor();
