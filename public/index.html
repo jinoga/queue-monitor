@@ -597,7 +597,12 @@
                     this.elements.trackedQueueContainer.style.display = 'block';
                     localStorage.setItem('trackedQueue', queueNumber);
                     
+                    // Clear sound history when manually tracking (user clicked button)
                     if (!isAutoTrack) {
+                        this.soundPlayedForQueue = {};
+                        this.saveSoundHistory();
+                        this.showAlert(`🔔 เริ่มติดตามคิว ${queueNumber} ใหม่...`, 'info');
+                    } else {
                         this.showAlert(`🔔 กำลังตรวจสอบคิว ${queueNumber}...`, 'info');
                     }
                     
@@ -650,7 +655,7 @@
                             this.soundPlayedForQueue[nearKey] = true;
                             this.saveSoundHistory(); // Save to localStorage
                         }
-                        // Clear sound flags if status moves away from current/near
+                        // Clear sound flags if status moves away from current/near (queue number changed)
                         else if (result.status === 'passed') {
                             delete this.soundPlayedForQueue[currentKey];
                             delete this.soundPlayedForQueue[nearKey];
