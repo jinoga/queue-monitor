@@ -156,6 +156,7 @@
                     this.volume = 0.8;
                     this.isEnabled = true; // เปลี่ยนเป็น true เพื่อเปิดค่าเริ่มต้น
                     this.lastNotificationTime = 0;
+                    this.thaiVoiceStatus = null; // Cache Thai voice status: null=unknown, true=available, false=not available
                     this.initializeAudio();
                 }
 
@@ -165,6 +166,9 @@
                         if (window.AudioContext || window.webkitAudioContext) {
                             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         }
+                        
+                        // Check Thai voice availability once
+                        this.checkThaiVoiceAvailability();
                         
                         // Auto-enable sound on first user interaction
                         const enableSoundOnInteraction = async () => {
@@ -178,6 +182,52 @@
                     } catch (error) {
                         console.log('Web Audio API not available:', error);
                     }
+                }
+
+                // Check and cache Thai voice availability
+                checkThaiVoiceAvailability() {
+                    if ('speechSynthesis' in window) {
+                        const voices = speechSynthesis.getVoices();
+                        
+                        if (voices.length > 0) {
+                            // Voices are loaded, check for Thai
+                            const hasThaiVoice = voices.some(voice => 
+                                voice.lang.includes('th') || 
+                                voice.lang.includes('TH') ||
+                                voice.name.toLowerCase().includes('thai')
+                            );
+                            this.thaiVoiceStatus = hasThaiVoice;
+                            console.log('Thai voice availability determined:', hasThaiVoice);
+                        } else {
+                            // Voices not loaded yet, wait for them
+                            speechSynthesis.addEventListener('voiceschanged', () => {
+                                const newVoices = speechSynthesis.getVoices();
+                                const hasThaiVoice = newVoices.some(voice => 
+                                    voice.lang.includes('th') || 
+                                    voice.lang.includes('TH') ||
+                                    voice.name.toLowerCase().includes('thai')
+                                );
+                                this.thaiVoiceStatus = hasThaiVoice;
+                                console.log('Thai voice availability determined (delayed):', hasThaiVoice);
+                            }, { once: true });
+                            
+                            // Fallback: assume no Thai voice for immediate decisions
+                            this.thaiVoiceStatus = false;
+                            console.log('Voices not loaded, assuming no Thai voice for now');
+                        }
+                    } else {
+                        this.thaiVoiceStatus = false;
+                        console.log('Speech synthesis not available');
+                    }
+                }
+
+                // Get consistent Thai voice status
+                hasThaiVoice() {
+                    // If we haven't determined yet, re-check
+                    if (this.thaiVoiceStatus === null) {
+                        this.checkThaiVoiceAvailability();
+                    }
+                    return this.thaiVoiceStatus === true;
                 }
 
                 async enableSound() {
@@ -357,11 +407,23 @@
 
                     console.log('🔔 Playing near queue notification for:', queueNumber);
 
-                    // Single gentle beep
-                    setTimeout(() => this.createBeepSound(600, 200), 0);
+                    // Check if Thai voice is available for near notifications too
+                    const voices = speechSynthesis.getVoices();
+                    const hasThaiVoice = voices.some(voice => 
+                        voice.lang.includes('th') || 
+                        voice.lang.includes('TH') ||
+                        voice.name.toLowerCase().includes('thai')
+                    );
 
-                    // Try Thai speech, will fallback to 5 beeps if not available
-                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว โปรดเตรียมตัว`), 300);
+                    if (hasThaiVoice && voices.length > 0) {
+                        // Play gentle beep only if using Thai speech
+                        setTimeout(() => this.createBeepSound(600, 200), 0);
+                        // Thai speech
+                        setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว โปรดเตรียมตัว`), 300);
+                    } else {
+                        // Just use the 5-beep sequence from speech fallback, no additional beeps
+                        this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว โปรดเตรียมตัว`);
+                    }
 
                     // Browser notification without vibration
                     this.showNotification(
@@ -381,16 +443,38 @@
 
                     console.log('🔊 Playing queue notification for:', queueNumber);
 
-                    // Method 1: Beep sounds (multiple beeps for attention)
-                    setTimeout(() => this.createBeepSound(800, 300), 0);
-                    setTimeout(() => this.createBeepSound(1000, 300), 400);
-                    setTimeout(() => this.createBeepSound(800, 300), 800);
+                    // Method 1: Initial beep sounds (only if we'll use Thai speech)
+                    // First check if Thai voice is available
+                    const voices = speechSynthesis.getVoices();
+                    const hasThaiVoice = voices.some(voice => 
+                        voice.lang.includes('th') || 
+                        voice.lang.includes('TH') ||
+                        voice.name.toLowerCase().includes('thai')
+                    );
 
-                    // Method 2: Data URI sound as backup
-                    setTimeout(() => this.playDataURISound(), 100);
+                    let willUseThai = hasThaiVoice;
+                    
+                    // If voices not loaded yet, assume no Thai (mobile browsers often load late)
+                    if (voices.length === 0) {
+                        willUseThai = false;
+                    }
 
-                    // Method 3: Speech notification - will fallback to beeps if Thai not available
-                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ โปรดไปที่ช่องบริการ`), 1200);
+                    if (willUseThai) {
+                        // Play initial beeps only if using Thai speech
+                        setTimeout(() => this.createBeepSound(800, 300), 0);
+                        setTimeout(() => this.createBeepSound(1000, 300), 400);
+                        setTimeout(() => this.createBeepSound(800, 300), 800);
+                        
+                        // Method 2: Data URI sound as backup
+                        setTimeout(() => this.playDataURISound(), 100);
+                        
+                        // Method 3: Thai speech (will NOT play beeps since Thai is available)
+                        setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ โปรดไปที่ช่องบริการ`), 1200);
+                    } else {
+                        // Skip initial beeps, go straight to 5-beep sequence via speech fallback
+                        // Method 3: Will play 5 beeps instead of speech
+                        this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ โปรดไปที่ช่องบริการ`);
+                    }
 
                     // Method 4: Browser notification
                     this.showNotification(
