@@ -139,7 +139,7 @@
         <div class="notification-panel"><h2>🔔 ติดตามคิวของคุณ</h2><div class="notification-input"><label>เลขคิวของคุณ:</label><input type="text" id="queueNumber" class="queue-input" placeholder="เช่น 1039"><button class="btn btn-warning" id="trackBtn">🔔 ติดตามคิว</button><button class="btn btn-secondary" id="clearTrackBtn">❌ ลบการติดตาม</button></div><div id="trackedQueueContainer" style="display: none;"><div class="tracked-queue" id="trackedQueue"><div class="queue-status"><div class="queue-info"><div class="queue-number" id="trackedQueueNumber">-</div><div class="queue-details"><div id="queuePosition">รอตรวจสอบ...</div><div id="queueEstimate">กำลังคำนวณ...</div></div></div><div id="notificationStatus">🔔 กำลังติดตาม</div></div></div></div></div>
         <div><h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2><div id="counterDisplay" class="counter-display-grid"><div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">กำลังโหลดข้อมูลช่องบริการ...</div></div></div>
         <div style="border-top: 1px solid #eee; margin-top: 20px;"><h2 style="padding: 30px 30px 0 30px; text-align: center; color: #888; font-weight: 500;">สถานะระบบ</h2><div class="status-panel"><div class="status-card" id="connectionCard"><div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div><div class="status-label">🔗 สถานะการเชื่อมต่อ</div></div><div class="status-card"><div class="status-value" id="lastUpdate">-</div><div class="status-label">⏰ อัพเดตล่าสุด</div></div><div class="status-card"><div class="status-value" id="counterCount">0</div><div class="status-label">🪟 ช่องบริการ</div></div></div></div>
-        <div class="footer"><p>ระบบติดตามคิว Design โดย Jinkung</p></div>
+        <div class="footer"><p>ระบบติดตามคิว Design โดย Nirun Meebanmai</p></div>
     </div>
 
     <script>
@@ -394,7 +394,7 @@
                     return true;
                 }
                 
-                scheduleAutoRefresh() { setTimeout(() => { window.location.reload(); }, 60000); }
+                scheduleAutoRefresh() { setTimeout(() => { window.location.reload(); }, 30000); }
                 updateElementWithAnimation(element, newText) { if (element && element.textContent !== String(newText)) { element.textContent = newText; element.classList.add('update-anim'); element.addEventListener('animationend', () => { element.classList.remove('update-anim'); }, { once: true }); } }
 
                 bindEvents() {
