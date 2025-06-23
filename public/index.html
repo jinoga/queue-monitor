@@ -245,11 +245,50 @@
                     try {
                         if ('speechSynthesis' in window) {
                             const utterance = new SpeechSynthesisUtterance(text);
-                            utterance.lang = 'th-TH';
+                            
+                            // Try to find Thai voice first
+                            const voices = speechSynthesis.getVoices();
+                            const thaiVoice = voices.find(voice => 
+                                voice.lang.includes('th') || 
+                                voice.lang.includes('TH') ||
+                                voice.name.toLowerCase().includes('thai')
+                            );
+                            
+                            if (thaiVoice) {
+                                utterance.voice = thaiVoice;
+                                utterance.lang = 'th-TH';
+                            } else {
+                                // If no Thai voice, use default but force Thai language
+                                utterance.lang = 'th-TH';
+                                // Fallback: if still no Thai support, don't speak
+                                const supportedLangs = voices.map(v => v.lang);
+                                if (!supportedLangs.some(lang => lang.includes('th') || lang.includes('TH'))) {
+                                    console.log('No Thai voice available, skipping speech');
+                                    return;
+                                }
+                            }
+                            
                             utterance.volume = this.volume;
-                            utterance.rate = 1;
-                            utterance.pitch = 1.2;
-                            speechSynthesis.speak(utterance);
+                            utterance.rate = 0.9; // Slightly slower for clarity
+                            utterance.pitch = 1.1;
+                            
+                            // Additional fallback for browsers that don't load voices immediately
+                            if (voices.length === 0) {
+                                speechSynthesis.addEventListener('voiceschanged', () => {
+                                    const newVoices = speechSynthesis.getVoices();
+                                    const newThaiVoice = newVoices.find(voice => 
+                                        voice.lang.includes('th') || 
+                                        voice.lang.includes('TH') ||
+                                        voice.name.toLowerCase().includes('thai')
+                                    );
+                                    if (newThaiVoice) {
+                                        utterance.voice = newThaiVoice;
+                                    }
+                                    speechSynthesis.speak(utterance);
+                                }, { once: true });
+                            } else {
+                                speechSynthesis.speak(utterance);
+                            }
                         }
                     } catch (error) {
                         console.error('Error with speech synthesis:', error);
@@ -293,7 +332,7 @@
                     if (!this.isEnabled) return;
 
                     const now = Date.now();
-                    if (now - this.lastNotificationTime < 3000) return; // Shorter cooldown for near notifications
+                    if (now - this.lastNotificationTime < 1000) return; // Shorter cooldown for near notifications
                     this.lastNotificationTime = now;
 
                     console.log('🔔 Playing near queue notification for:', queueNumber);
@@ -316,8 +355,8 @@
                     if (!this.isEnabled) return;
 
                     const now = Date.now();
-                    // Prevent spam notifications (minimum 5 seconds between notifications)
-                    if (now - this.lastNotificationTime < 5000) return;
+                    // Prevent spam notifications (minimum 2 seconds between any notifications)
+                    if (now - this.lastNotificationTime < 2000) return;
                     this.lastNotificationTime = now;
 
                     console.log('🔊 Playing queue notification for:', queueNumber);
@@ -643,6 +682,7 @@
                 clearTracking() { 
                     this.trackedQueue = null; 
                     this.previousQueueStatus = null;
+                    this.soundPlayedForQueue = {}; // Clear all sound tracking when stopping tracking
                     this.elements.trackedQueueContainer.style.display = 'none'; 
                     this.elements.queueNumber.value = ''; 
                     localStorage.removeItem('trackedQueue'); 
