@@ -240,7 +240,7 @@
                     }
                 }
 
-                // Method 3: Speech Synthesis with Chrome fallback
+                // Method 3: Speech Synthesis with beep fallback
                 playSpeechNotification(text = 'ถึงคิวแล้วครับ') {
                     try {
                         if ('speechSynthesis' in window) {
@@ -255,24 +255,18 @@
                             );
                             
                             if (thaiVoice) {
-                                // Use Thai voice
                                 utterance.voice = thaiVoice;
                                 utterance.lang = 'th-TH';
                                 utterance.volume = this.volume;
                                 utterance.rate = 0.9;
                                 utterance.pitch = 1.1;
                                 speechSynthesis.speak(utterance);
-                                console.log('Using Thai voice:', thaiVoice.name);
+                                console.log('Using Thai voice');
                             } else {
-                                // Use English phonetic instead of Thai
-                                const phoneticText = this.convertThaiToPhonetic(text);
-                                utterance.text = phoneticText;
-                                utterance.lang = 'en-US';
-                                utterance.volume = this.volume;
-                                utterance.rate = 0.8; // Slower for phonetic
-                                utterance.pitch = 1.0;
-                                speechSynthesis.speak(utterance);
-                                console.log('Using English phonetic fallback:', phoneticText);
+                                // No Thai voice available: Use long beep sequence instead
+                                console.log('No Thai voice available, using beep sequence');
+                                this.playLongBeepSequence();
+                                return;
                             }
                             
                             // Additional fallback for browsers that don't load voices immediately
@@ -286,51 +280,35 @@
                                     );
                                     if (newThaiVoice) {
                                         utterance.voice = newThaiVoice;
-                                        utterance.text = text;
                                         utterance.lang = 'th-TH';
                                         speechSynthesis.speak(utterance);
-                                        console.log('Using delayed Thai voice:', newThaiVoice.name);
+                                        console.log('Using Thai voice (delayed)');
                                     } else {
-                                        utterance.text = this.convertThaiToPhonetic(text);
-                                        utterance.lang = 'en-US';
-                                        speechSynthesis.speak(utterance);
-                                        console.log('Using delayed English phonetic fallback');
+                                        // Still no Thai voice after loading
+                                        console.log('Still no Thai voice after loading, using beep sequence');
+                                        this.playLongBeepSequence();
                                     }
                                 }, { once: true });
                             }
+                        } else {
+                            // Speech synthesis not available
+                            console.log('Speech synthesis not available, using beep sequence');
+                            this.playLongBeepSequence();
                         }
                     } catch (error) {
                         console.error('Error with speech synthesis:', error);
+                        this.playLongBeepSequence();
                     }
                 }
 
-                // Convert Thai text to phonetic English for browsers without Thai support
-                convertThaiToPhonetic(thaiText) {
-                    const phoneticMap = {
-                        'คิว': 'Queue',
-                        'ถึงคิวแล้วครับ': 'Your queue number is ready',
-                        'โปรดไปที่ช่องบริการ': 'Please go to service counter',
-                        'เหลืออีก': 'remaining',
-                        'คิว โปรดเตรียมตัว': 'queues remaining. Please prepare',
-                        'ทดสอบเสียงแจ้งเตือนภาษาไทย ระบบทำงานปกติ': 'Thai language sound test. System working normally',
-                        // Number patterns
-                        '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
-                        '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine', '0': 'zero'
-                    };
-
-                    let result = thaiText;
-                    
-                    // Replace Thai text with phonetic equivalents
-                    for (const [thai, phonetic] of Object.entries(phoneticMap)) {
-                        result = result.replace(new RegExp(thai, 'g'), phonetic);
+                // Play 5 long beeps as fallback when Thai speech is not available
+                playLongBeepSequence() {
+                    console.log('Playing 5 long beeps as speech fallback');
+                    for (let i = 0; i < 5; i++) {
+                        setTimeout(() => {
+                            this.createBeepSound(800 + (i * 100), 800); // Varying frequency, longer duration
+                        }, i * 1000); // 1 second apart
                     }
-                    
-                    // Handle queue numbers (extract numbers and convert)
-                    result = result.replace(/(\d+)/g, (match) => {
-                        return match.split('').map(digit => phoneticMap[digit] || digit).join(' ');
-                    });
-                    
-                    return result;
                 }
 
                 // Method 4: Browser notification with sound
