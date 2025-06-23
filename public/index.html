@@ -390,6 +390,7 @@
                     this.elements = {};
                     this.soundManager = new SoundNotificationManager();
                     this.previousQueueStatus = null; // Track previous status to detect changes
+                    this.soundPlayedForQueue = {}; // Track which sounds have been played for each queue status
                 }
 
                 init() {
@@ -529,17 +530,33 @@
                         const latestCalledInScope = data[0].current_queue;
                         const result = this.getQueueInfo(queueNumber, latestCalledInScope);
                         
-                        // Check if status changed to 'current' and play notification
-                        if (result.status === 'current' && this.previousQueueStatus !== 'current') {
+                        // Create unique keys for sound tracking
+                        const currentKey = `${queueNumber}_current`;
+                        const nearKey = `${queueNumber}_near`;
+                        
+                        // Check if status changed to 'current' and sound hasn't been played yet
+                        if (result.status === 'current' && !this.soundPlayedForQueue[currentKey]) {
                             this.soundManager.playQueueNotification(queueNumber);
                             this.showAlert(`🎯 คิว ${queueNumber} ถึงคิวแล้ว! กรุณาไปที่ช่องบริการ`, 'success');
+                            this.soundPlayedForQueue[currentKey] = true;
+                            // Clear near notification flag when reaching current
+                            delete this.soundPlayedForQueue[nearKey];
                         }
-                        // Also play sound when queue is near (3 or fewer remaining)
-                        else if (result.status === 'waiting' && result.remaining <= 3 && this.previousQueueStatus !== 'near') {
+                        // Also play sound when queue is near (3 or fewer remaining) and sound hasn't been played
+                        else if (result.status === 'waiting' && result.remaining <= 3 && !this.soundPlayedForQueue[nearKey]) {
                             // Play a lighter notification for "near" status
                             this.soundManager.playNearQueueNotification(queueNumber, result.remaining);
                             this.showAlert(`⚠️ คิว ${queueNumber} ใกล้ถึงแล้ว! เหลืออีก ${result.remaining} คิว`, 'warning');
-                            this.previousQueueStatus = 'near';
+                            this.soundPlayedForQueue[nearKey] = true;
+                        }
+                        // Clear sound flags if status moves away from current/near
+                        else if (result.status === 'passed') {
+                            delete this.soundPlayedForQueue[currentKey];
+                            delete this.soundPlayedForQueue[nearKey];
+                        }
+                        else if (result.status === 'waiting' && result.remaining > 3) {
+                            delete this.soundPlayedForQueue[nearKey];
+                            // Keep currentKey for when it reaches current later
                         }
                         
                         this.previousQueueStatus = result.status;
