@@ -240,7 +240,7 @@
                     }
                 }
 
-                // Method 3: Speech Synthesis
+                // Method 3: Speech Synthesis with Chrome fallback
                 playSpeechNotification(text = 'ถึงคิวแล้วครับ') {
                     try {
                         if ('speechSynthesis' in window) {
@@ -257,20 +257,21 @@
                             if (thaiVoice) {
                                 utterance.voice = thaiVoice;
                                 utterance.lang = 'th-TH';
+                                utterance.volume = this.volume;
+                                utterance.rate = 0.9;
+                                utterance.pitch = 1.1;
+                                speechSynthesis.speak(utterance);
                             } else {
-                                // If no Thai voice, use default but force Thai language
-                                utterance.lang = 'th-TH';
-                                // Fallback: if still no Thai support, don't speak
-                                const supportedLangs = voices.map(v => v.lang);
-                                if (!supportedLangs.some(lang => lang.includes('th') || lang.includes('TH'))) {
-                                    console.log('No Thai voice available, skipping speech');
-                                    return;
-                                }
+                                // Chrome/browsers without Thai: Use phonetic English approximation
+                                const phoneticText = this.convertThaiToPhonetic(text);
+                                utterance.text = phoneticText;
+                                utterance.lang = 'en-US';
+                                utterance.volume = this.volume;
+                                utterance.rate = 0.8; // Slower for phonetic
+                                utterance.pitch = 1.0;
+                                speechSynthesis.speak(utterance);
+                                console.log('Using phonetic fallback:', phoneticText);
                             }
-                            
-                            utterance.volume = this.volume;
-                            utterance.rate = 0.9; // Slightly slower for clarity
-                            utterance.pitch = 1.1;
                             
                             // Additional fallback for browsers that don't load voices immediately
                             if (voices.length === 0) {
@@ -283,16 +284,48 @@
                                     );
                                     if (newThaiVoice) {
                                         utterance.voice = newThaiVoice;
+                                        utterance.text = text;
+                                        utterance.lang = 'th-TH';
+                                    } else {
+                                        utterance.text = this.convertThaiToPhonetic(text);
+                                        utterance.lang = 'en-US';
                                     }
                                     speechSynthesis.speak(utterance);
                                 }, { once: true });
-                            } else {
-                                speechSynthesis.speak(utterance);
                             }
                         }
                     } catch (error) {
                         console.error('Error with speech synthesis:', error);
                     }
+                }
+
+                // Convert Thai text to phonetic English for browsers without Thai support
+                convertThaiToPhonetic(thaiText) {
+                    const phoneticMap = {
+                        'คิว': 'Queue',
+                        'ถึงคิวแล้วครับ': 'Your queue number is ready',
+                        'โปรดไปที่ช่องบริการ': 'Please go to service counter',
+                        'เหลืออีก': 'remaining',
+                        'คิว โปรดเตรียมตัว': 'queues remaining. Please prepare',
+                        'ทดสอบเสียงแจ้งเตือนภาษาไทย ระบบทำงานปกติ': 'Thai language sound test. System working normally',
+                        // Number patterns
+                        '1': 'one', '2': 'two', '3': 'three', '4': 'four', '5': 'five',
+                        '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine', '0': 'zero'
+                    };
+
+                    let result = thaiText;
+                    
+                    // Replace Thai text with phonetic equivalents
+                    for (const [thai, phonetic] of Object.entries(phoneticMap)) {
+                        result = result.replace(new RegExp(thai, 'g'), phonetic);
+                    }
+                    
+                    // Handle queue numbers (extract numbers and convert)
+                    result = result.replace(/(\d+)/g, (match) => {
+                        return match.split('').map(digit => phoneticMap[digit] || digit).join(' ');
+                    });
+                    
+                    return result;
                 }
 
                 // Method 4: Browser notification with sound
@@ -341,7 +374,7 @@
                     setTimeout(() => this.createBeepSound(600, 200), 0);
 
                     // Shorter speech notification
-                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว`), 300);
+                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว โปรดเตรียมตัว`), 300);
 
                     // Browser notification without vibration
                     this.showNotification(
@@ -370,7 +403,7 @@
                     setTimeout(() => this.playDataURISound(), 100);
 
                     // Method 3: Speech notification
-                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ`), 1200);
+                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ โปรดไปที่ช่องบริการ`), 1200);
 
                     // Method 4: Browser notification
                     this.showNotification(
@@ -406,7 +439,9 @@
 
                 // Test sound function
                 testSound() {
-                    this.playQueueNotification('TEST');
+                    this.playSpeechNotification('ทดสอบเสียงแจ้งเตือนภาษาไทย ระบบทำงานปกติ');
+                    // Also play a beep for immediate feedback
+                    setTimeout(() => this.createBeepSound(800, 500), 100);
                 }
 
                 setVolume(volume) {
@@ -436,10 +471,11 @@
                     // Check office status before initializing everything else
                     if (this.checkOfficeHours()) {
                         if (this.initializeElements()) {
+                            this.loadSoundHistory(); // Load sound history from localStorage
                             this.bindEvents();
                             this.startRealtimeSubscription();
                             this.scheduleAutoRefresh();
-                            console.log('✅ Queue Monitor (v20 - With Sound Notifications) Initialized');
+                            console.log('✅ Queue Monitor (v21 - Persistent Sound Memory) Initialized');
                         }
                     }
                 }
@@ -514,6 +550,29 @@
                     }
                 }
 
+                loadSoundHistory() {
+                    // Load sound history from localStorage to persist across page refreshes
+                    const savedSoundHistory = localStorage.getItem('soundPlayedForQueue');
+                    if (savedSoundHistory) {
+                        try {
+                            this.soundPlayedForQueue = JSON.parse(savedSoundHistory);
+                            console.log('Loaded sound history:', this.soundPlayedForQueue);
+                        } catch (error) {
+                            console.error('Error loading sound history:', error);
+                            this.soundPlayedForQueue = {};
+                        }
+                    }
+                }
+
+                saveSoundHistory() {
+                    // Save sound history to localStorage
+                    try {
+                        localStorage.setItem('soundPlayedForQueue', JSON.stringify(this.soundPlayedForQueue));
+                    } catch (error) {
+                        console.error('Error saving sound history:', error);
+                    }
+                }
+
                 updateSoundButtonState() {
                     const soundStatus = this.soundManager.getSoundStatus();
                     if (soundStatus.isEnabled) {
@@ -578,8 +637,10 @@
                             this.soundManager.playQueueNotification(queueNumber);
                             this.showAlert(`🎯 คิว ${queueNumber} ถึงคิวแล้ว! กรุณาไปที่ช่องบริการ`, 'success');
                             this.soundPlayedForQueue[currentKey] = true;
+                            this.saveSoundHistory(); // Save to localStorage
                             // Clear near notification flag when reaching current
                             delete this.soundPlayedForQueue[nearKey];
+                            this.saveSoundHistory();
                         }
                         // Also play sound when queue is near (3 or fewer remaining) and sound hasn't been played
                         else if (result.status === 'waiting' && result.remaining <= 3 && !this.soundPlayedForQueue[nearKey]) {
@@ -587,14 +648,17 @@
                             this.soundManager.playNearQueueNotification(queueNumber, result.remaining);
                             this.showAlert(`⚠️ คิว ${queueNumber} ใกล้ถึงแล้ว! เหลืออีก ${result.remaining} คิว`, 'warning');
                             this.soundPlayedForQueue[nearKey] = true;
+                            this.saveSoundHistory(); // Save to localStorage
                         }
                         // Clear sound flags if status moves away from current/near
                         else if (result.status === 'passed') {
                             delete this.soundPlayedForQueue[currentKey];
                             delete this.soundPlayedForQueue[nearKey];
+                            this.saveSoundHistory();
                         }
                         else if (result.status === 'waiting' && result.remaining > 3) {
                             delete this.soundPlayedForQueue[nearKey];
+                            this.saveSoundHistory();
                             // Keep currentKey for when it reaches current later
                         }
                         
@@ -683,6 +747,7 @@
                     this.trackedQueue = null; 
                     this.previousQueueStatus = null;
                     this.soundPlayedForQueue = {}; // Clear all sound tracking when stopping tracking
+                    localStorage.removeItem('soundPlayedForQueue'); // Also clear from localStorage
                     this.elements.trackedQueueContainer.style.display = 'none'; 
                     this.elements.queueNumber.value = ''; 
                     localStorage.removeItem('trackedQueue'); 
