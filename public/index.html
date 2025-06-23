@@ -139,7 +139,7 @@
         <div class="notification-panel"><h2>🔔 ติดตามคิวของคุณ</h2><div class="notification-input"><label>เลขคิวของคุณ:</label><input type="text" id="queueNumber" class="queue-input" placeholder="เช่น 1039"><button class="btn btn-warning" id="trackBtn">🔔 ติดตามคิว</button><button class="btn btn-secondary" id="clearTrackBtn">❌ ลบการติดตาม</button></div><div id="trackedQueueContainer" style="display: none;"><div class="tracked-queue" id="trackedQueue"><div class="queue-status"><div class="queue-info"><div class="queue-number" id="trackedQueueNumber">-</div><div class="queue-details"><div id="queuePosition">รอตรวจสอบ...</div><div id="queueEstimate">กำลังคำนวณ...</div></div></div><div id="notificationStatus">🔔 กำลังติดตาม</div></div></div></div></div>
         <div><h2 style="padding: 0 30px; margin-bottom: 20px;">🪟 สถานะช่องบริการแต่ละช่อง</h2><div id="counterDisplay" class="counter-display-grid"><div style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">กำลังโหลดข้อมูลช่องบริการ...</div></div></div>
         <div style="border-top: 1px solid #eee; margin-top: 20px;"><h2 style="padding: 30px 30px 0 30px; text-align: center; color: #888; font-weight: 500;">สถานะระบบ</h2><div class="status-panel"><div class="status-card" id="connectionCard"><div class="status-value" id="connectionStatus">กำลังเชื่อมต่อ...</div><div class="status-label">🔗 สถานะการเชื่อมต่อ</div></div><div class="status-card"><div class="status-value" id="lastUpdate">-</div><div class="status-label">⏰ อัพเดตล่าสุด</div></div><div class="status-card"><div class="status-value" id="counterCount">0</div><div class="status-label">🪟 ช่องบริการ</div></div></div></div>
-        <div class="footer"><p>ระบบติดตามคิว Design โดย Nirun Meebanmai</p></div>
+        <div class="footer"><p>ระบบติดตามคิว Design โดย Jinkung</p></div>
     </div>
 
     <script>
@@ -288,6 +288,29 @@
                     }
                 }
 
+                // Lighter notification for near queue
+                async playNearQueueNotification(queueNumber, remaining) {
+                    if (!this.isEnabled) return;
+
+                    const now = Date.now();
+                    if (now - this.lastNotificationTime < 3000) return; // Shorter cooldown for near notifications
+                    this.lastNotificationTime = now;
+
+                    console.log('🔔 Playing near queue notification for:', queueNumber);
+
+                    // Single gentle beep
+                    setTimeout(() => this.createBeepSound(600, 200), 0);
+
+                    // Shorter speech notification
+                    setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว`), 300);
+
+                    // Browser notification without vibration
+                    this.showNotification(
+                        '⚠️ ใกล้ถึงคิวแล้ว', 
+                        `คิว ${queueNumber} เหลืออีก ${remaining} คิว`
+                    );
+                }
+
                 // Main notification method - uses all available methods
                 async playQueueNotification(queueNumber) {
                     if (!this.isEnabled) return;
@@ -349,6 +372,13 @@
 
                 setVolume(volume) {
                     this.volume = Math.max(0, Math.min(1, volume));
+                }
+
+                getSoundStatus() {
+                    return {
+                        isEnabled: this.isEnabled,
+                        volume: this.volume
+                    };
                 }
             }
 
@@ -444,6 +474,17 @@
                     }
                 }
 
+                updateSoundButtonState() {
+                    const soundStatus = this.soundManager.getSoundStatus();
+                    if (soundStatus.isEnabled) {
+                        this.elements.enableSoundBtn.textContent = '✅ เสียงแจ้งเตือนเปิดแล้ว';
+                        this.elements.enableSoundBtn.style.background = 'linear-gradient(135deg, #4caf50 0%, #388e3c 100%)';
+                    } else {
+                        this.elements.enableSoundBtn.textContent = '🔔 เปิดเสียงแจ้งเตือน';
+                        this.elements.enableSoundBtn.style.background = 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)';
+                    }
+                }
+
                 // --- [REBUILT] trackQueue is now the main controller ---
                 async trackQueue(isAutoTrack = false) {
                     const queueNumber = this.elements.queueNumber.value.trim();
@@ -492,6 +533,13 @@
                         if (result.status === 'current' && this.previousQueueStatus !== 'current') {
                             this.soundManager.playQueueNotification(queueNumber);
                             this.showAlert(`🎯 คิว ${queueNumber} ถึงคิวแล้ว! กรุณาไปที่ช่องบริการ`, 'success');
+                        }
+                        // Also play sound when queue is near (3 or fewer remaining)
+                        else if (result.status === 'waiting' && result.remaining <= 3 && this.previousQueueStatus !== 'near') {
+                            // Play a lighter notification for "near" status
+                            this.soundManager.playNearQueueNotification(queueNumber, result.remaining);
+                            this.showAlert(`⚠️ คิว ${queueNumber} ใกล้ถึงแล้ว! เหลืออีก ${result.remaining} คิว`, 'warning');
+                            this.previousQueueStatus = 'near';
                         }
                         
                         this.previousQueueStatus = result.status;
