@@ -262,11 +262,12 @@
                                 utterance.pitch = 1.1;
                                 speechSynthesis.speak(utterance);
                                 console.log('Using Thai voice');
+                                return { success: true, usedThai: true };
                             } else {
                                 // No Thai voice available: Use long beep sequence instead
                                 console.log('No Thai voice available, using beep sequence');
                                 this.playLongBeepSequence();
-                                return;
+                                return { success: true, usedThai: false };
                             }
                             
                             // Additional fallback for browsers that don't load voices immediately
@@ -289,15 +290,18 @@
                                         this.playLongBeepSequence();
                                     }
                                 }, { once: true });
+                                return { success: true, usedThai: 'pending' };
                             }
                         } else {
                             // Speech synthesis not available
                             console.log('Speech synthesis not available, using beep sequence');
                             this.playLongBeepSequence();
+                            return { success: true, usedThai: false };
                         }
                     } catch (error) {
                         console.error('Error with speech synthesis:', error);
                         this.playLongBeepSequence();
+                        return { success: true, usedThai: false };
                     }
                 }
 
@@ -356,7 +360,7 @@
                     // Single gentle beep
                     setTimeout(() => this.createBeepSound(600, 200), 0);
 
-                    // Shorter speech notification
+                    // Try Thai speech, will fallback to 5 beeps if not available
                     setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} เหลืออีก ${remaining} คิว โปรดเตรียมตัว`), 300);
 
                     // Browser notification without vibration
@@ -385,7 +389,7 @@
                     // Method 2: Data URI sound as backup
                     setTimeout(() => this.playDataURISound(), 100);
 
-                    // Method 3: Speech notification
+                    // Method 3: Speech notification - will fallback to beeps if Thai not available
                     setTimeout(() => this.playSpeechNotification(`คิว ${queueNumber} ถึงคิวแล้วครับ โปรดไปที่ช่องบริการ`), 1200);
 
                     // Method 4: Browser notification
@@ -422,6 +426,7 @@
 
                 // Test sound function
                 testSound() {
+                    // Try Thai speech first, if not available will automatically use beep sequence
                     this.playSpeechNotification('ทดสอบเสียงแจ้งเตือนภาษาไทย ระบบทำงานปกติ');
                     // Also play a beep for immediate feedback
                     setTimeout(() => this.createBeepSound(800, 500), 100);
