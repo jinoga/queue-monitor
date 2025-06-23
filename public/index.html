@@ -154,7 +154,7 @@
                 constructor() {
                     this.audioContext = null;
                     this.volume = 0.8;
-                    this.isEnabled = false;
+                    this.isEnabled = true; // เปลี่ยนเป็น true เพื่อเปิดค่าเริ่มต้น
                     this.lastNotificationTime = 0;
                     this.initializeAudio();
                 }
@@ -165,6 +165,16 @@
                         if (window.AudioContext || window.webkitAudioContext) {
                             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         }
+                        
+                        // Auto-enable sound on first user interaction
+                        const enableSoundOnInteraction = async () => {
+                            await this.enableSound();
+                            document.removeEventListener('click', enableSoundOnInteraction);
+                            document.removeEventListener('touchstart', enableSoundOnInteraction);
+                        };
+                        
+                        document.addEventListener('click', enableSoundOnInteraction, { once: true });
+                        document.addEventListener('touchstart', enableSoundOnInteraction, { once: true });
                     } catch (error) {
                         console.log('Web Audio API not available:', error);
                     }
@@ -394,7 +404,7 @@
                     return true;
                 }
                 
-                scheduleAutoRefresh() { setTimeout(() => { window.location.reload(); }, 30000); }
+                scheduleAutoRefresh() { setTimeout(() => { window.location.reload(); }, 30000); } // เปลี่ยนจาก 60000 (1 นาที) เป็น 30000 (30 วินาที)
                 updateElementWithAnimation(element, newText) { if (element && element.textContent !== String(newText)) { element.textContent = newText; element.classList.add('update-anim'); element.addEventListener('animationend', () => { element.classList.remove('update-anim'); }, { once: true }); } }
 
                 bindEvents() {
@@ -410,10 +420,9 @@
 
                     this.elements.enableSoundBtn.addEventListener('click', async () => {
                         const enabled = await this.soundManager.enableSound();
+                        this.updateSoundButtonState();
                         if (enabled) {
                             this.showAlert('🔔 เปิดใช้งานเสียงแจ้งเตือนแล้ว', 'success');
-                            this.elements.enableSoundBtn.textContent = '✅ เสียงแจ้งเตือนเปิดแล้ว';
-                            this.elements.enableSoundBtn.disabled = true;
                         } else {
                             this.showAlert('❌ ไม่สามารถเปิดเสียงแจ้งเตือนได้', 'warning');
                         }
@@ -424,6 +433,9 @@
                         this.soundManager.setVolume(volume);
                         this.elements.volumeValue.textContent = e.target.value + '%';
                     });
+                    
+                    // Initialize sound button state
+                    this.updateSoundButtonState();
                     
                     const savedQueue = localStorage.getItem('trackedQueue');
                     if (savedQueue) {
