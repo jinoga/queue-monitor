@@ -158,6 +158,7 @@
                     this.lastNotificationTime = 0;
                     this.thaiVoiceStatus = null; // Cache Thai voice status: null=unknown, true=available, false=not available
                     this.initializeAudio();
+                    
                 }
 
                 async initializeAudio() {
@@ -537,7 +538,10 @@
                     this.soundManager = new SoundNotificationManager();
                     this.previousQueueStatus = null; // Track previous status to detect changes
                     this.soundPlayedForQueue = {}; // Track which sounds have been played for each queue status
+                    this.lineNotificationUrl = 'https://your-deployed-app.railway.app/api/notify-queue-updates';
                 }
+
+                
 
                 init() {
                     // Check office status before initializing everything else
@@ -631,6 +635,31 @@
                     }
                     return null;
                 }
+
+                async notifyLineUsers() {
+    try {
+        const response = await fetch(this.lineNotificationUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                timestamp: new Date().toISOString(),
+                source: 'queue_monitor'
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('📱 Line notifications sent:', result.notificationsSent || 0);
+            if (result.notificationsSent > 0) {
+                this.showAlert(`📱 ส่งแจ้งเตือน Line ให้ ${result.notificationsSent} คน`, 'success');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Line notification error:', error);
+    }
+}
+
+                
 
                 loadSoundHistory() {
                     // Load sound history from localStorage to persist across page refreshes
@@ -873,6 +902,9 @@
                     if (this.trackedQueue) { 
                         this.trackQueue(true); 
                     } 
+                    setTimeout(() => {
+                        this.notifyLineUsers();
+                    }, 1000);
                 }
 
                 processSnapshotsForCounters(snapshots) { 
