@@ -6,104 +6,101 @@
     <title>คิวที่ดิน จ.นครสวรรค์</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f0f2f5; color: #333; }
-        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; }
-        .main-card { background: #202124; color: #00e676; margin: 20px; padding: 40px; border-radius: 15px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
-        .main-card h2 { font-size: 5em; margin: 10px 0; }
-        .status-bar { display: flex; justify-content: space-around; background: #333; color: #ccc; padding: 10px; font-size: 0.8em; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-top: 4px solid #1a73e8; }
-        .card b { font-size: 2em; color: #1a73e8; }
-        .tracker { text-align: center; padding: 20px; background: #e8f0fe; }
-        input { padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 100px; text-align: center; font-size: 1.1em; }
-        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f8f9fa; }
+        .header { background: #0046ad; color: white; padding: 20px; text-align: center; }
+        .status-bar { background: #333; color: #0f0; padding: 10px; font-size: 0.8em; display: flex; justify-content: space-around; }
+        .main-display { background: #1a1a1a; color: #00ff41; padding: 40px; text-align: center; border-bottom: 5px solid #0046ad; }
+        .main-display h2 { font-size: 5.5em; margin: 0; font-family: 'Courier New', monospace; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        .card b { font-size: 2.4em; color: #0046ad; display: block; margin: 5px 0; }
+        .card .dur { font-size: 0.75em; color: #d81b60; font-weight: bold; }
+        .tracker { background: #e3f2fd; padding: 25px; text-align: center; border-bottom: 1px solid #ccc; }
+        input { padding: 12px; font-size: 1.2em; width: 150px; text-align: center; border: 2px solid #0046ad; border-radius: 8px; }
+        button { padding: 12px 25px; background: #0046ad; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="header"><h1>ระบบติดตามคิว จ.นครสวรรค์</h1></div>
+    <div class="header"><h1>สำนักงานที่ดิน จ.นครสวรรค์</h1></div>
     <div class="status-bar">
-        <span>DB: <span id="s-web">...</span></span>
-        <span>BOT: <span id="s-bot">...</span></span>
+        <span>DATABASE: <span id="s-web">...</span></span>
+        <span>BOT-SSE: <span id="s-bot">...</span></span>
     </div>
-    <div class="main-card">
-        <div style="color: #aaa;">คิวล่าสุด</div>
+    <div class="main-display">
+        <div style="color:#888; font-size:1.2em;">คิวล่าสุดที่เรียก</div>
         <h2 id="q-big">-</h2>
-        <div id="c-big">กำลังรอข้อมูล...</div>
+        <div id="c-big" style="color:#fff; font-size:1.4em;">กำลังรอข้อมูล...</div>
     </div>
     <div class="tracker">
-        <input type="text" id="iq" placeholder="เลขคิว">
+        <input type="text" id="iq" placeholder="ใส่เลขคิว">
         <button onclick="window.setMyQ()">🔔 ติดตามคิวของฉัน</button>
         <div id="t-msg" style="margin-top:10px; font-weight:bold;"></div>
     </div>
     <div id="grid" class="grid"></div>
 
     <script>
-    // หุ้มโค้ดทั้งหมดไว้ใน Scope ส่วนตัวเพื่อป้องกันตัวแปรชนกัน
     (function() {
         const URL = 'https://ldkelubmmtkrfybapdpc.supabase.co';
         const KEY = 'sb_publishable_DRyKBA4GTwq0x-Q4EKY5og_JsCIF5xq';
         const sb = window.supabase.createClient(URL, KEY);
-
-        let myQ = localStorage.getItem('myQ');
-        let spokenQ = null;
+        let myQ = localStorage.getItem('myQ'), spokenQ = null;
 
         async function update() {
             try {
                 const { data: status } = await sb.from('latest_status').select('*').single();
-                const { data: snaps } = await sb.from('queue_snapshots').select('*').order('created_at', {ascending: false}).limit(30);
-                
+                const { data: snaps } = await sb.from('queue_snapshots').select('*').order('created_at', {ascending: false}).limit(40);
                 if (!status || !snaps) return;
 
-                // อัปเดตสถานะ
-                document.getElementById('s-web').innerHTML = '<b style="color:#00ff00">ONLINE</b>';
+                document.getElementById('s-web').innerText = 'CONNECTED';
                 const diff = (new Date() - new Date(status.last_updated)) / 1000 / 60;
-                document.getElementById('s-bot').innerHTML = diff < 3 ? '<b style="color:#00ff00">ONLINE</b>' : '<b style="color:#ff4444">OFFLINE</b>';
+                document.getElementById('s-bot').innerText = diff < 3 ? status.bot_status : 'OFFLINE';
 
-                // คิวใหญ่
                 const top = snaps[0];
                 document.getElementById('q-big').innerText = top.current_queue;
-                document.getElementById('c-big').innerText = "ช่องบริการที่ " + top.current_counter;
+                document.getElementById('c-big').innerText = `ช่องบริการที่ ${top.current_counter}`;
 
-                // ตารางคิวแยกช่อง
                 const counts = {};
-                snaps.forEach(s => { if(!counts[s.current_counter]) counts[s.current_counter] = s.current_queue; });
                 const grid = document.getElementById('grid');
                 grid.innerHTML = '';
-                Object.keys(counts).sort((a,b)=>a-b).forEach(c => {
-                    grid.innerHTML += `<div class="card"><div>ช่อง ${c}</div><b>${counts[c]}</b></div>`;
+                
+                snaps.forEach(s => {
+                    if (!counts[s.current_counter]) {
+                        counts[s.current_counter] = true;
+                        const time = new Date(s.created_at).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
+                        const durText = s.duration_seconds ? `<div class="dur">⏱ ก่อนหน้าใช้: ${Math.floor(s.duration_seconds/60)} นาที</div>` : '<div class="dur">⏱ คิวแรก</div>';
+                        grid.innerHTML += `<div class="card">
+                            <div style="font-size:0.8em; color:#666;">ช่อง ${s.current_counter} | ${time}</div>
+                            <b>${s.current_queue}</b>${durText}
+                        </div>`;
+                    }
                 });
 
-                // แจ้งเตือน
                 if (myQ) {
                     const msg = document.getElementById('t-msg');
                     if (top.current_queue == myQ) {
-                        msg.innerHTML = "🎯 ถึงคิวของคุณแล้ว!";
+                        msg.innerText = `🎯 ถึงคิว [${myQ}] แล้ว!`;
                         msg.style.color = "red";
                         if (spokenQ !== myQ) {
-                            const speech = new SpeechSynthesisUtterance("ถึงคิว " + myQ + " แล้วค่ะ");
-                            speech.lang = 'th-TH';
-                            window.speechSynthesis.speak(speech);
+                            const sp = new SpeechSynthesisUtterance(`ถึงคิว ${myQ} แล้วค่ะ`);
+                            sp.lang = 'th-TH'; window.speechSynthesis.speak(sp);
                             spokenQ = myQ;
                         }
                     } else {
-                        msg.innerHTML = "กำลังรอคิวของคุณ: " + myQ;
+                        msg.innerText = `คิวของคุณ: ${myQ} (กำลังรอ)`;
                         msg.style.color = "blue";
                     }
                 }
-            } catch (e) { console.log(e); }
+            } catch (e) {}
         }
 
-        window.setMyQ = function() {
+        window.setMyQ = () => {
             myQ = document.getElementById('iq').value;
-            localStorage.setItem('myQ', myQ);
-            spokenQ = null;
-            alert("บันทึกคิว " + myQ);
+            localStorage.setItem('myQ', myQ); spokenQ = null;
             update();
         };
 
-        sb.channel('db').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, update).subscribe();
-        update();
-        setInterval(update, 20000);
+        sb.channel('q').on('postgres_changes', {event:'*', schema:'public', table:'latest_status'}, update).subscribe();
+        update(); setInterval(update, 20000);
     })();
     </script>
 </body>
