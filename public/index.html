@@ -6,31 +6,45 @@
     <title>ระบบติดตามคิว จ.นครสวรรค์</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* CSS ย่อจากตัวเดิมของคุณเพื่อความกระชับ */
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .header { background: #1976D2; color: white; padding: 20px; text-align: center; }
-        .latest-panel { background: #333; color: #00ff00; padding: 30px; text-align: center; font-size: 3em; font-weight: bold; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; padding: 20px; }
-        .card { border: 1px solid #ddd; padding: 15px; border-radius: 10px; text-align: center; }
-        .card h3 { margin: 0 0 10px 0; color: #1976D2; }
-        .q-num { font-size: 2em; font-weight: bold; color: #2e7d32; }
-        .btn { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; background: #4caf50; color: white; }
+        * { box-sizing: border-box; }
+        body { font-family: 'Tahoma', sans-serif; background: #f4f7f6; margin: 0; padding: 10px; }
+        .container { max-width: 800px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: #1a73e8; color: white; padding: 20px; text-align: center; }
+        .status-bar { display: flex; justify-content: space-around; background: #333; color: white; padding: 8px; font-size: 0.8em; }
+        .latest-call { background: #202124; color: #00e676; text-align: center; padding: 40px 20px; }
+        .latest-call h2 { font-size: 4em; margin: 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; padding: 20px; }
+        .card { border: 2px solid #e8eaed; border-radius: 10px; padding: 15px; text-align: center; background: #fff; }
+        .card h3 { color: #5f6368; margin: 0 0 10px 0; font-size: 0.9em; }
+        .card .q-now { font-size: 2.2em; font-weight: bold; color: #1a73e8; }
+        .tracker { padding: 20px; background: #e8f0fe; text-align: center; }
+        input { padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 120px; font-size: 1.1em; text-align: center; }
+        button { padding: 10px 20px; background: #1a73e8; color: white; border: none; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header"><h1>🏢 ติดตามคิวที่ดิน จ.นครสวรรค์</h1></div>
-        <div class="latest-panel" id="mainQ">-</div>
-        
-        <div style="padding: 20px; text-align: center; background: #e3f2fd;">
-            <input type="text" id="myQ" placeholder="ใส่เลขคิวของคุณ" style="padding: 10px; font-size: 1.2em; width: 150px; text-align: center;">
-            <button class="btn" onclick="trackQ()">🔔 ติดตามคิวของฉัน</button>
-            <div id="trackStatus" style="margin-top: 10px; font-weight: bold;"></div>
+        <div class="header"><h1>สำนักงานที่ดิน จ.นครสวรรค์</h1></div>
+        <div class="status-bar">
+            <span>🌐 เว็บ-DB: <span id="web-status">...</span></span>
+            <span>🤖 บอท-Server: <span id="bot-status">...</span></span>
+        </div>
+        <div class="latest-call">
+            <div style="font-size: 1em; color: #aaa;">คิวล่าสุดที่เรียก</div>
+            <h2 id="main-q">-</h2>
+            <div id="main-c" style="color: #fff; margin-top: 5px;"></div>
         </div>
 
-        <div id="counterGrid" class="grid"></div>
-        <div style="text-align: center; padding: 10px; color: #888;">อัปเดตล่าสุด: <span id="updateTime">-</span></div>
+        <div class="tracker">
+            <input type="text" id="input-q" placeholder="เลขคิว">
+            <button onclick="saveTrack()">🔔 ติดตามคิวของฉัน</button>
+            <div id="track-msg" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+
+        <div id="grid" class="grid"></div>
+        <div style="text-align: center; padding: 10px; font-size: 0.8em; color: #999;">
+            อัปเดตล่าสุด: <span id="last-time">-</span>
+        </div>
     </div>
 
     <script>
@@ -38,76 +52,76 @@
         const SUPABASE_KEY = 'sb_publishable_DRyKBA4GTwq0x-Q4EKY5og_JsCIF5xq';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let trackedNumber = localStorage.getItem('trackedQ') || null;
+        let myQ = localStorage.getItem('myQ');
 
-        async function init() {
-            if (trackedNumber) document.getElementById('myQ').value = trackedNumber;
-            fetchData();
-            
-            // Realtime Subscribe
-            supabase.channel('any')
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, () => {
-                    console.log("🔔 ข้อมูลเปลี่ยน!");
-                    fetchData();
-                }).subscribe();
-        }
-
-        async function fetchData() {
-            // ดึง Snapshot ล่าสุด
+        async function updateData() {
+            const { data: status } = await supabase.from('latest_status').select('*').single();
             const { data: snaps } = await supabase.from('queue_snapshots').select('*').order('created_at', {ascending: false}).limit(50);
-            if (!snaps || snaps.length === 0) return;
 
-            // แสดงคิวล่าสุดรวม
-            document.getElementById('mainQ').innerText = snaps[0].current_queue;
-            document.getElementById('updateTime').innerText = new Date(snaps[0].created_at).toLocaleTimeString();
+            if (!status || !snaps) return;
 
-            // จัดกลุ่มตามช่อง
+            // 1. ตรวจสอบ Health
+            const webStatus = document.getElementById('web-status');
+            const botStatus = document.getElementById('bot-status');
+            webStatus.innerHTML = '<span style="color:#00ff00">เชื่อมต่อแล้ว</span>';
+            
+            const diff = (new Date() - new Date(status.last_updated)) / 1000 / 60;
+            if (diff > 2) {
+                botStatus.innerHTML = '<span style="color:#ff5252">บอทขาดการติดต่อ</span>';
+            } else {
+                botStatus.innerHTML = status.bot_status === '🟢 Online' 
+                    ? '<span style="color:#00ff00">ออนไลน์</span>' 
+                    : '<span style="color:#ffab40">หลุด/เชื่อมต่อใหม่</span>';
+            }
+
+            // 2. แสดงคิวหลัก
+            const top = snaps[0];
+            document.getElementById('main-q').innerText = top.current_queue;
+            document.getElementById('main-c').innerText = `ช่องบริการที่ ${top.current_counter}`;
+            document.getElementById('last-time').innerText = new Date(top.created_at).toLocaleTimeString();
+
+            // 3. แสดงคิวแยกช่อง
             const counters = {};
-            snaps.forEach(s => {
-                if (!counters[s.current_counter]) counters[s.current_counter] = s.current_queue;
-            });
-
-            const grid = document.getElementById('counterGrid');
+            snaps.forEach(s => { if(!counters[s.current_counter]) counters[s.current_counter] = s.current_queue; });
+            const grid = document.getElementById('grid');
             grid.innerHTML = '';
             Object.keys(counters).sort((a,b)=>a-b).forEach(c => {
-                grid.innerHTML += `<div class="card"><h3>ช่องที่ ${c}</h3><div class="q-num">${counters[c]}</div></div>`;
+                grid.innerHTML += `<div class="card"><h3>ช่องที่ ${c}</h3><div class="q-now">${counters[c]}</div></div>`;
             });
 
-            checkMyQueue(snaps);
-        }
-
-        function trackQ() {
-            trackedNumber = document.getElementById('myQ').value.trim();
-            if (trackedNumber) {
-                localStorage.setItem('trackedQ', trackedNumber);
-                alert("เริ่มติดตามคิว " + trackedNumber);
-                fetchData();
+            // 4. แจ้งเตือนคิวตัวเอง
+            if (myQ) {
+                const msg = document.getElementById('track-msg');
+                if (top.current_queue == myQ) {
+                    msg.innerHTML = `🎯 ถึงคิว ${myQ} แล้ว! กรุณาไปที่ช่องบริการ`;
+                    msg.style.color = "red";
+                    speak(`ถึงคิว ${myQ} แล้วค่ะ`);
+                } else {
+                    msg.innerHTML = `คิวของคุณคือ ${myQ} (กำลังรอ)`;
+                    msg.style.color = "blue";
+                }
             }
         }
 
-        function checkMyQueue(snaps) {
-            if (!trackedNumber) return;
-            // หาคิวล่าสุดของช่องที่เกี่ยวข้อง (Logic ง่ายๆ: ดูคิวล่าสุดในระบบที่ใกล้เคียง)
-            const latest = snaps[0].current_queue;
-            const statusDiv = document.getElementById('trackStatus');
-            
-            if (latest == trackedNumber) {
-                statusDiv.innerHTML = "🎯 ถึงคิวของคุณแล้ว!";
-                statusDiv.style.color = "red";
-                playVoice("ถึงคิว " + trackedNumber + " แล้วค่ะ");
-            } else {
-                statusDiv.innerHTML = "กำลังรอ... (คิวปัจจุบัน: " + latest + ")";
-                statusDiv.style.color = "blue";
-            }
+        function saveTrack() {
+            myQ = document.getElementById('input-q').value;
+            localStorage.setItem('myQ', myQ);
+            alert('เริ่มติดตามคิว ' + myQ);
+            updateData();
         }
 
-        function playVoice(text) {
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'th-TH';
-            window.speechSynthesis.speak(msg);
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'th-TH';
+            window.speechSynthesis.speak(utterance);
         }
 
-        init();
+        // Realtime Subscribe
+        supabase.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, updateData).subscribe();
+        
+        if (myQ) document.getElementById('input-q').value = myQ;
+        updateData();
+        setInterval(updateData, 15000); // กันเหนียวเช็ค Health ทุก 15 วิ
     </script>
 </body>
 </html>
