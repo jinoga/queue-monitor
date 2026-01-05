@@ -1,6 +1,6 @@
 {
   "name": "queue-monitor-online",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ระบบติดตามคิวสำนักงานที่ดิน - แจ้งเตือนคิว + สถานะช่องบริการ",
   "keywords": [
     "queue",
@@ -25,4 +25,5 @@
     "node": ">=18.0.0"
   }
 }
+
 
