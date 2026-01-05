@@ -2,11 +2,6 @@
   "name": "queue-monitor-online",
   "version": "1.0.0",
   "description": "ระบบติดตามคิวสำนักงานที่ดิน - แจ้งเตือนคิว + สถานะช่องบริการ",
-  "main": "server-simple.js",
-  "scripts": {
-    "start": "node server-simple.js",
-    "dev": "nodemon server-simple.js"
-  },
   "keywords": [
     "queue",
     "notification",
@@ -16,14 +11,12 @@
   ],
   "author": "Your Name",
   "license": "MIT",
-  "dependencies": {
-    "@line/bot-sdk": "^9.4.1",
-    "@supabase/supabase-js": "^2.47.10",
-    "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12",
-    "cors": "^2.8.5",
+ "dependencies": {
+    "@line/bot-sdk": "^10.5.0",
+    "@supabase/supabase-js": "^2.89.0",
     "eventsource": "^2.0.2",
-    "express": "^4.18.2"
+    "express": "^5.2.1",
+    "node-telegram-bot-api": "^0.66.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
@@ -32,3 +25,4 @@
     "node": ">=18.0.0"
   }
 }
+
