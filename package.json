@@ -9,7 +9,7 @@
   },
   "keywords": [
     "queue",
-    "notification", 
+    "notification",
     "counter-status",
     "land-office",
     "thailand"
@@ -17,16 +17,18 @@
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
+    "@line/bot-sdk": "^9.4.1",
+    "@supabase/supabase-js": "^2.47.10",
     "axios": "^1.6.0",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "eventsource": "^2.0.2",
+    "express": "^4.18.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=18.0.0"
   }
 }
