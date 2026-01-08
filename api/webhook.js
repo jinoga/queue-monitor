@@ -40,20 +40,13 @@ async function handleEvent(event) {
     const isNumberOnly = /^\d+$/.test(text);
     const isTrackCommand = text.startsWith('ติดตามคิว');
 
-    // 1. สั่งติดตามคิว
     if (isNumberOnly || isTrackCommand) {
         return await processQueueTracking(event, userId, text, isNumberOnly);
-    }
-    // 2. สั่งยกเลิก
-    else if (text === 'หยุด') {
+    } else if (text === 'หยุด') {
         return await processStopTracking(event, userId);
-    }
-    // 3. ดูประวัติล่าสุด
-    else if (text === 'ล่าสุด' || text === 'ประวัติ') {
+    } else if (text === 'ล่าสุด' || text === 'ประวัติ') {
         return await processViewHistory(event);
-    }
-    // 4. เมนูหลัก
-    else {
+    } else {
         return await sendWelcomeMenu(event);
     }
 }
@@ -63,7 +56,6 @@ async function handleEvent(event) {
 // =======================================================
 
 async function processQueueTracking(event, userId, text, isNumberOnly) {
-    // Check Quota
     if (await isQuotaFull()) {
         return client.replyMessage(event.replyToken, {
             type: 'text',
@@ -78,11 +70,8 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
         });
     }
     const targetQueue = parseInt(queueInput);
-
-    // Get Status
     const status = await getSmartQueueStatus(targetQueue);
 
-    // Save DB
     const { error } = await supabase.from('line_trackers').upsert({ 
         user_id: userId, 
         tracking_queue: targetQueue 
@@ -93,7 +82,6 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
         return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
     }
 
-    // Send Flex
     const flexMessage = generateStatusFlex(targetQueue, status);
     return client.replyMessage(event.replyToken, flexMessage);
 }
@@ -108,12 +96,11 @@ async function processStopTracking(event, userId) {
 
 async function processViewHistory(event) {
     try {
-        // ดึง 20 รายการล่าสุด ตามที่ขอ
         const { data: logs } = await supabase
             .from('queue_snapshots')
             .select('current_queue, current_counter, created_at')
             .order('created_at', { ascending: false })
-            .limit(20);
+            .limit(10);
 
         if (!logs || logs.length === 0) {
             return client.replyMessage(event.replyToken, { type: 'text', text: "⏳ ยังไม่มีข้อมูลการเรียกคิวในวันนี้" });
@@ -153,7 +140,23 @@ async function sendWelcomeMenu(event) {
                     { type: "text", text: "ตัวอย่าง: 4012", size: "xs", color: "#aaaaaa", margin: "xs" }
                 ]
             },
-            footer: getCommonFooter() // ใช้ Footer แบบเดียวกันทุกหน้า
+            footer: {
+                type: "box",
+                layout: "vertical",
+                spacing: "sm",
+                contents: [
+                    {
+                        type: "button",
+                        action: { type: "message", label: "📋 ดูรายการล่าสุด", text: "ล่าสุด" },
+                        style: "secondary"
+                    },
+                    {
+                        type: "button",
+                        action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" },
+                        style: "primary", color: "#1DB446"
+                    }
+                ]
+            }
         }
     });
 }
@@ -161,39 +164,6 @@ async function sendWelcomeMenu(event) {
 // =======================================================
 // 🛠️ HELPER FUNCTIONS
 // =======================================================
-
-/**
- * สร้าง Footer มาตรฐานที่มี 3 ปุ่ม ตามที่ขอ
- */
-function getCommonFooter() {
-    return {
-        type: "box",
-        layout: "vertical",
-        spacing: "sm",
-        contents: [
-            {
-                type: "button",
-                action: { type: "message", label: "📋 ดูคิวล่าสุด 20 รายการ", text: "ล่าสุด" },
-                style: "secondary",
-                height: "sm"
-            },
-            {
-                type: "button",
-                action: { type: "uri", label: "🌐 ดูคิวผ่าน Website", uri: "https://queue-monitor.vercel.app" },
-                style: "primary",
-                color: "#1DB446",
-                height: "sm"
-            },
-            {
-                type: "button",
-                action: { type: "uri", label: "✈️ ติดตามคิวต่อเนื่อง (Telegram)", uri: "https://t.me/NakhonsawanLandBot" },
-                style: "link",
-                height: "sm",
-                color: "#0088cc"
-            }
-        ]
-    };
-}
 
 async function isQuotaFull() {
     try {
@@ -226,12 +196,15 @@ async function getSmartQueueStatus(targetQueue) {
 }
 
 // =======================================================
-// 🎨 FLEX MESSAGE GENERATORS
+// 🎨 FLEX GENERATORS
 // =======================================================
 
 function generateStatusFlex(targetQueue, status) {
     const { queue: currentQueue, counter: currentCounter } = status;
     
+    // ตั้งค่าลิ้งก์ Deep Link เข้า Telegram พร้อมเลขคิว
+    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${targetQueue}`;
+
     let statusText = "สถานะคิว";
     let statusColor = "#999999"; 
     let descText = "ตรวจสอบข้อมูล...";
@@ -243,18 +216,15 @@ function generateStatusFlex(targetQueue, status) {
             statusText = "ถึงคิวแล้ว!";
             statusColor = "#D93025"; 
             descText = `กรุณาติดต่อช่อง ${currentCounter}`;
-        } 
-        else if (diff === 1) {
+        } else if (diff === 1) {
             statusText = "คิวถัดไป";
             statusColor = "#F9AB00"; 
             descText = "เตรียมตัวรอเรียกได้เลย";
-        } 
-        else if (diff > 1) {
+        } else if (diff > 1) {
             statusText = `รออีก ${diff} คิว`;
             statusColor = "#1DB446"; 
             descText = `คิวปัจจุบัน: ${currentQueue}`;
-        }
-        else if (diff < 0) {
+        } else if (diff < 0) {
             statusText = "คิวปัจจุบัน";
             statusColor = "#555555"; 
             descText = `ขณะนี้เรียกถึงคิว: ${currentQueue}`;
@@ -287,14 +257,36 @@ function generateStatusFlex(targetQueue, status) {
                     }
                 ]
             },
-            footer: getCommonFooter() // ใช้ Footer 3 ปุ่ม
+            footer: {
+                type: "box",
+                layout: "vertical",
+                spacing: "sm",
+                contents: [
+                    {
+                        type: "button",
+                        action: { type: "uri", label: "🔔 แจ้งเตือนผ่าน Telegram", uri: telegramDeepLink },
+                        style: "primary", height: "sm", color: "#2481cc"
+                    },
+                    {
+                        type: "button",
+                        action: { type: "message", label: "📋 ดูรายการล่าสุด", text: "ล่าสุด" },
+                        style: "secondary", height: "sm"
+                    }
+                ]
+            }
         }
     };
 }
 
 function generateHistoryFlex(logs) {
     const listItems = logs.map(log => {
-        const time = new Date(log.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+        // แก้ไข TimeZone ให้เป็นเวลาไทย
+        const time = new Date(log.created_at).toLocaleTimeString('th-TH', { 
+            timeZone: 'Asia/Bangkok', 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+        
         return {
             type: "box",
             layout: "horizontal",
@@ -316,7 +308,7 @@ function generateHistoryFlex(logs) {
                 type: "box",
                 layout: "vertical",
                 contents: [
-                    { type: "text", text: "📋 รายการเรียกคิวล่าสุด (20)", weight: "bold", size: "md", color: "#1DB446" },
+                    { type: "text", text: "📋 รายการเรียกคิวล่าสุด", weight: "bold", size: "md", color: "#1DB446" },
                     { type: "separator", margin: "md" },
                     {
                         type: "box",
@@ -326,7 +318,13 @@ function generateHistoryFlex(logs) {
                     }
                 ]
             },
-            footer: getCommonFooter() // ใช้ Footer 3 ปุ่ม
+            footer: {
+                type: "box",
+                layout: "vertical",
+                contents: [
+                    { type: "text", text: "กด 'ล่าสุด' เพื่ออัปเดตข้อมูล", size: "xs", color: "#aaaaaa", align: "center" }
+                ]
+            }
         }
     };
 }
