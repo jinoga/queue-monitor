@@ -11,29 +11,35 @@ const config = {
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const client = new line.Client(config);
-
-// =======================================================
-// 🧠 BUSINESS LOGIC
-// =======================================================
-
 /**
- * 🔹 ฟังก์ชัน 1: จัดการการติดตามคิว (โหมดจำลองโควต้าเต็ม)
+ * 🔹 ฟังก์ชัน 1: จัดการการติดตามคิว (โหมดทดสอบโควต้าเต็ม)
  */
 async function processQueueTracking(event, userId, text, isNumberOnly) {
     
+    // 1. เตรียมเลขคิว (เอาไว้ใส่ในลิ้งก์ Telegram)
+    let queueInput = isNumberOnly ? text : text.replace('ติดตามคิว', '').trim();
+    if (!queueInput || isNaN(queueInput)) {
+        return client.replyMessage(event.replyToken, {
+            type: 'text', text: "❌ กรุณาระบุเลขคิวให้ถูกต้อง เช่น '4012'"
+        });
+    }
+    const targetQueue = parseInt(queueInput);
+
     // ============================================================
-    // 🔴 ส่วนจำลองสถานะ (SIMULATION)
+    // 🔴 ส่วนจำลองสถานะ (SIMULATION MODE)
     // ============================================================
     
-    // ตั้งค่าเป็น true เพื่อจำลองว่าเต็ม / เป็น false เพื่อใช้งานจริง
+    // ✅ ตั้งเป็น true เพื่อทดสอบ / ตั้งเป็น false หรือลบทิ้งเมื่อใช้จริง
     const isQuotaFullSimulation = true; 
     
-    // const isQuotaFullSimulation = await checkQuotaLimit(); // <-- บรรทัดนี้คือโค้ดจริง (เก็บไว้ก่อน)
+    // const isRealQuotaFull = await isQuotaFull(); // (โค้ดจริง: เก็บไว้ก่อน)
 
     if (isQuotaFullSimulation) {
-        console.log("⚠️ SIMULATION: Quota is FULL -> Sending Flex Message");
+        console.log("⚠️ SIMULATION: Quota is FULL -> Sending Warning Flex");
         
-        // ส่ง Flex Message แจ้งเตือนตามที่คุณออกแบบมา
+        // สร้างลิ้งก์ให้กดแล้วไป Telegram พร้อมเลขคิวเลย
+        const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${targetQueue}`;
+
         return client.replyMessage(event.replyToken, {
             type: 'flex',
             altText: '⚠️ แจ้งเตือน: โควต้า LINE เต็ม',
@@ -53,18 +59,19 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
                 footer: {
                     type: "box",
                     layout: "vertical",
+                    spacing: "sm",
                     contents: [
                         {
                             type: "button",
                             style: "primary",
                             color: "#2481cc", // สีฟ้า Telegram
                             height: "sm",
-                            // ⚠️ ใส่เลขคิวไปด้วย เพื่อให้กดแล้วติดตามได้เลย
-                            action: { type: "uri", label: "👉 ย้ายไป Telegram Bot", uri: `https://t.me/NakhonsawanLandBot?start=${text.replace('ติดตามคิว', '').trim()}` }
+                            // 👇 ปุ่มนี้จะพาไป Telegram พร้อมสั่งติดตามคิวนี้ทันที
+                            action: { type: "uri", label: "👉 ย้ายไป Telegram Bot", uri: telegramDeepLink }
                         },
                         {
                             type: "button",
-                            style: "link",
+                            style: "secondary",
                             height: "sm",
                             action: { type: "uri", label: "ดูผ่านเว็บไซต์", uri: "https://queue-monitor.vercel.app" }
                         }
@@ -75,21 +82,13 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
     }
     // ============================================================
 
-    // --- ด้านล่างนี้คือโค้ดปกติ (จะไม่ทำงานถ้า isQuotaFullSimulation = true) ---
 
-    // 2. Parse Input
-    let queueInput = isNumberOnly ? text : text.replace('ติดตามคิว', '').trim();
-    if (!queueInput || isNaN(queueInput)) {
-        return client.replyMessage(event.replyToken, {
-            type: 'text', text: "❌ กรุณาระบุเลขคิวให้ถูกต้อง เช่น '4012'"
-        });
-    }
-    const targetQueue = parseInt(queueInput);
+    // --- พื้นที่ทำงานปกติ (จะไม่ทำงานถ้า isQuotaFullSimulation = true) ---
 
-    // 3. Get Status
+    // 2. ดึงสถานะล่าสุด
     const status = await getSmartQueueStatus(targetQueue);
 
-    // 4. Save to DB
+    // 3. บันทึกลง DB
     const { error } = await supabase.from('line_trackers').upsert({ 
         user_id: userId, 
         tracking_queue: targetQueue 
@@ -100,7 +99,7 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
         return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
     }
 
-    // 5. Send Flex Message (ปกติ)
+    // 4. ส่ง Flex Message ปกติ (กรณีโควต้าไม่เต็ม)
     const flexMessage = generateStatusFlex(targetQueue, status);
     return client.replyMessage(event.replyToken, flexMessage);
 }
@@ -412,6 +411,7 @@ function generateHistoryFlex(logs) {
         }
     };
 }
+
 
 
 
