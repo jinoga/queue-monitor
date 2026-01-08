@@ -19,14 +19,18 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
     if (!req.body || !req.body.events) return res.status(200).json({ ok: true });
 
-    try {
+console.log("⚠️ SIMULATION: Quota is FULL");
+    return true;
+
+    
+   /* try {
         await Promise.all(req.body.events.map(event => handleEvent(event)));
         res.status(200).json({ ok: true });
     } catch (err) {
         console.error('Handler Error:', err);
         res.status(500).end();
     }
-}
+}*/
 
 // =======================================================
 // 🎮 EVENT ROUTER
@@ -335,4 +339,5 @@ function generateHistoryFlex(logs) {
         }
     };
 }
+
 
