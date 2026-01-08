@@ -195,10 +195,9 @@ async function getSmartQueueStatus(targetQueue) {
     return { queue: 0, counter: '-' };
 }
 
-// =======================================================
-// 🎨 FLEX GENERATORS
-// =======================================================
-
+/**
+ * สร้าง Flex แสดงสถานะคิว (แบบจัดเต็ม 3 ปุ่ม)
+ */
 function generateStatusFlex(targetQueue, status) {
     const { queue: currentQueue, counter: currentCounter } = status;
     
@@ -214,19 +213,19 @@ function generateStatusFlex(targetQueue, status) {
         
         if (diff === 0) {
             statusText = "ถึงคิวแล้ว!";
-            statusColor = "#D93025"; 
+            statusColor = "#D93025"; // แดง
             descText = `กรุณาติดต่อช่อง ${currentCounter}`;
         } else if (diff === 1) {
             statusText = "คิวถัดไป";
-            statusColor = "#F9AB00"; 
+            statusColor = "#F9AB00"; // ส้ม
             descText = "เตรียมตัวรอเรียกได้เลย";
         } else if (diff > 1) {
             statusText = `รออีก ${diff} คิว`;
-            statusColor = "#1DB446"; 
+            statusColor = "#1DB446"; // เขียว
             descText = `คิวปัจจุบัน: ${currentQueue}`;
         } else if (diff < 0) {
             statusText = "คิวปัจจุบัน";
-            statusColor = "#555555"; 
+            statusColor = "#555555"; // เทาเข้ม
             descText = `ขณะนี้เรียกถึงคิว: ${currentQueue}`;
         }
     } else {
@@ -260,17 +259,25 @@ function generateStatusFlex(targetQueue, status) {
             footer: {
                 type: "box",
                 layout: "vertical",
-                spacing: "sm",
+                spacing: "sm", // ระยะห่างระหว่างปุ่ม
                 contents: [
+                    // ปุ่มที่ 1: แจ้งเตือน Telegram (สำคัญสุด)
                     {
                         type: "button",
                         action: { type: "uri", label: "🔔 แจ้งเตือนผ่าน Telegram", uri: telegramDeepLink },
                         style: "primary", height: "sm", color: "#2481cc"
                     },
+                    // ปุ่มที่ 2: ดูประวัติล่าสุด (ใช้งานบ่อย)
                     {
                         type: "button",
                         action: { type: "message", label: "📋 ดูรายการล่าสุด", text: "ล่าสุด" },
                         style: "secondary", height: "sm"
+                    },
+                    // ปุ่มที่ 3: ดูเว็บ (ทางเลือก)
+                    {
+                        type: "button",
+                        action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" },
+                        style: "link", height: "sm"
                     }
                 ]
             }
@@ -328,3 +335,4 @@ function generateHistoryFlex(logs) {
         }
     };
 }
+
