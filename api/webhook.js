@@ -11,12 +11,60 @@ const config = {
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 const client = new line.Client(config);
-/**
- * 🔹 ฟังก์ชัน 1: จัดการการติดตามคิว (โหมดทดสอบโควต้าเต็ม)
- */
+
+// =======================================================
+// 🚀 MAIN HANDLER
+// =======================================================
+export default async function handler(req, res) {
+    if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
+    if (!req.body || !req.body.events) return res.status(200).json({ ok: true });
+
+    try {
+        await Promise.all(req.body.events.map(event => handleEvent(event)));
+        res.status(200).json({ ok: true });
+    } catch (err) {
+        console.error('Handler Error:', err);
+        res.status(500).end();
+    }
+}
+
+// =======================================================
+// 🎮 EVENT ROUTER
+// =======================================================
+async function handleEvent(event) {
+    if (event.type !== 'message' || event.message.type !== 'text') return null;
+
+    const userId = event.source.userId;
+    const text = event.message.text.trim();
+
+    const isNumberOnly = /^\d+$/.test(text);
+    const isTrackCommand = text.startsWith('ติดตามคิว');
+
+    // 1. สั่งติดตามคิว
+    if (isNumberOnly || isTrackCommand) {
+        return await processQueueTracking(event, userId, text, isNumberOnly);
+    } 
+    // 2. สั่งยกเลิก
+    else if (text === 'หยุด') {
+        return await processStopTracking(event, userId);
+    } 
+    // 3. ดูประวัติล่าสุด
+    else if (text === 'ล่าสุด' || text === 'ประวัติ') {
+        return await processViewHistory(event);
+    } 
+    // 4. เมนูหลัก
+    else {
+        return await sendWelcomeMenu(event);
+    }
+}
+
+// =======================================================
+// 🧠 BUSINESS LOGIC
+// =======================================================
+
 async function processQueueTracking(event, userId, text, isNumberOnly) {
     
-    // 1. เตรียมเลขคิว (เอาไว้ใส่ในลิ้งก์ Telegram)
+    // เตรียมเลขคิว (ต้องใช้ทั้งในโหมดจริง และโหมดทดสอบ)
     let queueInput = isNumberOnly ? text : text.replace('ติดตามคิว', '').trim();
     if (!queueInput || isNaN(queueInput)) {
         return client.replyMessage(event.replyToken, {
@@ -25,19 +73,22 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
     }
     const targetQueue = parseInt(queueInput);
 
-    // ============================================================
-    // 🔴 ส่วนจำลองสถานะ (SIMULATION MODE)
-    // ============================================================
+    // ==============================================================================
+    // 🔴 โซนตั้งค่าการทดสอบ (SIMULATION SWITCH)
+    // ==============================================================================
     
-    // ✅ ตั้งเป็น true เพื่อทดสอบ / ตั้งเป็น false หรือลบทิ้งเมื่อใช้จริง
-    const isQuotaFullSimulation = true; 
+    // 👇 แก้บรรทัดนี้: เป็น true เพื่อเทสว่าเต็ม / เป็น false เพื่อใช้งานจริง
+    const SIMULATE_QUOTA_FULL = true; 
     
-    // const isRealQuotaFull = await isQuotaFull(); // (โค้ดจริง: เก็บไว้ก่อน)
+    // ==============================================================================
 
-    if (isQuotaFullSimulation) {
-        console.log("⚠️ SIMULATION: Quota is FULL -> Sending Warning Flex");
-        
-        // สร้างลิ้งก์ให้กดแล้วไป Telegram พร้อมเลขคิวเลย
+    // 1. ตรวจสอบโหมดทดสอบ หรือ โควต้าเต็มจริง
+    const isRealQuotaFull = await isQuotaFull(); 
+
+    if (SIMULATE_QUOTA_FULL || isRealQuotaFull) {
+        console.log("⚠️ Quota Limit Triggered (Simulation or Real)");
+
+        // สร้างลิ้งก์ Deep Link ไป Telegram พร้อมเลขคิว
         const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${targetQueue}`;
 
         return client.replyMessage(event.replyToken, {
@@ -66,7 +117,7 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
                             style: "primary",
                             color: "#2481cc", // สีฟ้า Telegram
                             height: "sm",
-                            // 👇 ปุ่มนี้จะพาไป Telegram พร้อมสั่งติดตามคิวนี้ทันที
+                            // ปุ่มนี้กดแล้วไป Telegram พร้อมสั่งเริ่มงานทันที
                             action: { type: "uri", label: "👉 ย้ายไป Telegram Bot", uri: telegramDeepLink }
                         },
                         {
@@ -80,10 +131,8 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
             }
         });
     }
-    // ============================================================
 
-
-    // --- พื้นที่ทำงานปกติ (จะไม่ทำงานถ้า isQuotaFullSimulation = true) ---
+    // --- พื้นที่ทำงานปกติ (จะทำงานต่อเมื่อโควต้าไม่เต็ม และ Simulation = false) ---
 
     // 2. ดึงสถานะล่าสุด
     const status = await getSmartQueueStatus(targetQueue);
@@ -99,65 +148,7 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
         return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
     }
 
-    // 4. ส่ง Flex Message ปกติ (กรณีโควต้าไม่เต็ม)
-    const flexMessage = generateStatusFlex(targetQueue, status);
-    return client.replyMessage(event.replyToken, flexMessage);
-}
-
-// =======================================================
-// 🎮 EVENT ROUTER
-// =======================================================
-async function handleEvent(event) {
-    if (event.type !== 'message' || event.message.type !== 'text') return null;
-
-    const userId = event.source.userId;
-    const text = event.message.text.trim();
-
-    const isNumberOnly = /^\d+$/.test(text);
-    const isTrackCommand = text.startsWith('ติดตามคิว');
-
-    if (isNumberOnly || isTrackCommand) {
-        return await processQueueTracking(event, userId, text, isNumberOnly);
-    } else if (text === 'หยุด') {
-        return await processStopTracking(event, userId);
-    } else if (text === 'ล่าสุด' || text === 'ประวัติ') {
-        return await processViewHistory(event);
-    } else {
-        return await sendWelcomeMenu(event);
-    }
-}
-
-// =======================================================
-// 🧠 BUSINESS LOGIC
-// =======================================================
-
-async function processQueueTracking(event, userId, text, isNumberOnly) {
-    if (await isQuotaFull()) {
-        return client.replyMessage(event.replyToken, {
-            type: 'text',
-            text: `⚠️ ขณะนี้โควต้า LINE เต็มแล้ว กรุณาใช้ Telegram: https://t.me/NakhonsawanLandBot`
-        });
-    }
-
-    let queueInput = isNumberOnly ? text : text.replace('ติดตามคิว', '').trim();
-    if (!queueInput || isNaN(queueInput)) {
-        return client.replyMessage(event.replyToken, {
-            type: 'text', text: "❌ กรุณาระบุเลขคิวให้ถูกต้อง เช่น '4012'"
-        });
-    }
-    const targetQueue = parseInt(queueInput);
-    const status = await getSmartQueueStatus(targetQueue);
-
-    const { error } = await supabase.from('line_trackers').upsert({ 
-        user_id: userId, 
-        tracking_queue: targetQueue 
-    });
-
-    if (error) {
-        console.error("DB Error:", error);
-        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
-    }
-
+    // 4. ส่ง Flex Message ปกติ (มี 3 ปุ่ม)
     const flexMessage = generateStatusFlex(targetQueue, status);
     return client.replyMessage(event.replyToken, flexMessage);
 }
@@ -271,13 +262,12 @@ async function getSmartQueueStatus(targetQueue) {
     return { queue: 0, counter: '-' };
 }
 
-/**
- * สร้าง Flex แสดงสถานะคิว (แบบจัดเต็ม 3 ปุ่ม)
- */
+// =======================================================
+// 🎨 FLEX GENERATORS
+// =======================================================
+
 function generateStatusFlex(targetQueue, status) {
     const { queue: currentQueue, counter: currentCounter } = status;
-    
-    // ตั้งค่าลิ้งก์ Deep Link เข้า Telegram พร้อมเลขคิว
     const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${targetQueue}`;
 
     let statusText = "สถานะคิว";
@@ -289,19 +279,19 @@ function generateStatusFlex(targetQueue, status) {
         
         if (diff === 0) {
             statusText = "ถึงคิวแล้ว!";
-            statusColor = "#D93025"; // แดง
+            statusColor = "#D93025"; 
             descText = `กรุณาติดต่อช่อง ${currentCounter}`;
         } else if (diff === 1) {
             statusText = "คิวถัดไป";
-            statusColor = "#F9AB00"; // ส้ม
+            statusColor = "#F9AB00"; 
             descText = "เตรียมตัวรอเรียกได้เลย";
         } else if (diff > 1) {
             statusText = `รออีก ${diff} คิว`;
-            statusColor = "#1DB446"; // เขียว
+            statusColor = "#1DB446"; 
             descText = `คิวปัจจุบัน: ${currentQueue}`;
         } else if (diff < 0) {
             statusText = "คิวปัจจุบัน";
-            statusColor = "#555555"; // เทาเข้ม
+            statusColor = "#555555"; 
             descText = `ขณะนี้เรียกถึงคิว: ${currentQueue}`;
         }
     } else {
@@ -335,21 +325,18 @@ function generateStatusFlex(targetQueue, status) {
             footer: {
                 type: "box",
                 layout: "vertical",
-                spacing: "sm", // ระยะห่างระหว่างปุ่ม
+                spacing: "sm",
                 contents: [
-                    // ปุ่มที่ 1: แจ้งเตือน Telegram (สำคัญสุด)
                     {
                         type: "button",
                         action: { type: "uri", label: "🔔 แจ้งเตือนผ่าน Telegram", uri: telegramDeepLink },
                         style: "primary", height: "sm", color: "#2481cc"
                     },
-                    // ปุ่มที่ 2: ดูประวัติล่าสุด (ใช้งานบ่อย)
                     {
                         type: "button",
                         action: { type: "message", label: "📋 ดูรายการล่าสุด", text: "ล่าสุด" },
                         style: "secondary", height: "sm"
                     },
-                    // ปุ่มที่ 3: ดูเว็บ (ทางเลือก)
                     {
                         type: "button",
                         action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" },
@@ -363,7 +350,7 @@ function generateStatusFlex(targetQueue, status) {
 
 function generateHistoryFlex(logs) {
     const listItems = logs.map(log => {
-        // แก้ไข TimeZone ให้เป็นเวลาไทย
+        // บังคับแสดงเวลาเป็น Asia/Bangkok
         const time = new Date(log.created_at).toLocaleTimeString('th-TH', { 
             timeZone: 'Asia/Bangkok', 
             hour: '2-digit', 
@@ -411,7 +398,3 @@ function generateHistoryFlex(logs) {
         }
     };
 }
-
-
-
-
