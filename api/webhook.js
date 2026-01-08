@@ -37,7 +37,6 @@ async function handleEvent(event) {
     const userId = event.source.userId;
     const text = event.message.text.trim();
 
-    // เช็คว่าเป็นตัวเลขล้วน หรือ คำสั่งติดตาม
     const isNumberOnly = /^\d+$/.test(text);
     const isCommand = text.startsWith('ติดตามคิว');
 
@@ -102,7 +101,6 @@ async function processStopTracking(event, userId) {
 }
 
 async function sendWelcomeMenu(event) {
-    // ใช้ Flex Message สำหรับเมนูหลักให้น่าใช้
     return client.replyMessage(event.replyToken, {
         type: 'flex',
         altText: 'เมนูติดตามคิวที่ดิน',
@@ -110,7 +108,7 @@ async function sendWelcomeMenu(event) {
             type: "bubble",
             hero: {
                 type: "image",
-                url: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png", // Icon คิว (ตัวอย่าง)
+                url: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
                 size: "full",
                 aspectRatio: "20:13",
                 aspectMode: "cover",
@@ -182,12 +180,12 @@ async function getSmartQueueStatus(targetQueue) {
 }
 
 /**
- * สร้าง Flex Message สวยงามตามสถานะ
+ * สร้าง Flex Message (ตัดส่วนแจ้งเตือนเลยคิวออกแล้ว)
  */
 function generateFlexMessage(targetQueue, status) {
     const { queue: currentQueue, counter: currentCounter } = status;
     
-    // Default Color & Text (กรณีรอคิว)
+    // ค่าเริ่มต้น
     let statusText = "รอเรียกคิว";
     let statusColor = "#1DB446"; // Green
     let descText = "ระบบกำลังติดตามให้คุณ...";
@@ -207,14 +205,10 @@ function generateFlexMessage(targetQueue, status) {
             statusText = `รออีก ${diff} คิว`;
             statusColor = "#1DB446"; // Green
             descText = `คิวปัจจุบัน: ${currentQueue}`;
-        } else if (diff < 0) {
-            // เลยคิว (ไม่แจ้งเตือนรุนแรง ตามที่ขอ) แสดงแค่สถานะ
-            statusText = "เรียกผ่านไปแล้ว";
-            statusColor = "#999999"; // Grey
-            descText = `คิวปัจจุบัน: ${currentQueue}`;
         }
+        // ❌ ตัดส่วน else if (diff < 0) ออกตามคำขอ
+        // หากเลยคิว (diff < 0) ระบบจะใช้ค่าเริ่มต้น (รอเรียกคิว) หรือไม่แสดงสถานะพิเศษ
     } else {
-        // ยังไม่มีข้อมูลคิวหมวดนี้
         descText = "รอระบบอัปเดตข้อมูล...";
     }
 
