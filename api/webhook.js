@@ -168,36 +168,50 @@ async function processViewHistory(event) {
     const userId = event.source.userId;
 
     try {
-        // 1. ค้นหาว่า User คนนี้กำลังติดตามคิวอะไรอยู่
-        const { data: tracker, error } = await supabase
+        // 1. หาว่า User ถือคิวอะไรอยู่
+        const { data: tracker } = await supabase
             .from('line_trackers')
             .select('tracking_queue')
             .eq('user_id', userId)
-            .maybeSingle(); // ดึงมา 1 รายการ
+            .maybeSingle();
 
-        // กรณีไม่พบข้อมูล (ยังไม่ได้ติดตามคิว)
+        // ถ้าไม่ได้ติดตามคิว -> แจ้งให้ไปพิมพ์เลขคิวก่อน
         if (!tracker) {
             return client.replyMessage(event.replyToken, {
                 type: 'text',
-                text: "❌ ท่านยังไม่ได้ติดตามคิวใดๆ\n\nกรุณาพิมพ์ 'เลขคิว' ที่ต้องการติดตามก่อนครับ (เช่น 4012)"
+                text: "❌ ท่านยังไม่ได้ติดตามคิว\nกรุณาพิมพ์เลขคิวของท่านก่อน (เช่น 4012) เพื่อให้ระบบดึงประวัติได้ถูกต้องครับ"
             });
         }
 
-        const targetQueue = parseInt(tracker.tracking_queue);
+        const myQueue = parseInt(tracker.tracking_queue);
 
-        // 2. ดึงสถานะคิวล่าสุด (ใช้ฟังก์ชันเดิมที่มีอยู่แล้ว)
-        // มันจะไปคำนวณหาคิวปัจจุบันในหมวดนั้นๆ ให้เอง
-        const status = await getSmartQueueStatus(targetQueue);
+        // 2. คำนวณช่วงหมวดหมู่ (เช่น 4012 -> หมวด 4000-5000)
+        const seriesStart = Math.floor(myQueue / 1000) * 1000;
+        const seriesEnd = seriesStart + 1000;
 
-        // 3. สร้าง Flex Message แสดงผล (ใช้แบบเดียวกับตอนพิมพ์เลขคิว สวยและครบถ้วน)
-        // ซึ่งในฟังก์ชันนี้มีการคำนวณ "รออีก X คิว" ให้อยู่แล้ว
-        const flexMessage = generateStatusFlex(targetQueue, status);
-        
+        // 3. ดึง 10 รายการล่าสุด *เฉพาะหมวดนั้น*
+        const { data: logs } = await supabase
+            .from('queue_snapshots')
+            .select('current_queue, current_counter, created_at')
+            .gte('current_queue', seriesStart) // มากกว่าหรือเท่ากับ 4000
+            .lt('current_queue', seriesEnd)    // น้อยกว่า 5000
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (!logs || logs.length === 0) {
+            return client.replyMessage(event.replyToken, { 
+                type: 'text', 
+                text: `⏳ ยังไม่มีการเรียกคิวในหมวด ${seriesStart} วันนี้` 
+            });
+        }
+
+        // 4. สร้าง Flex Message แบบเฉพาะเจาะจง
+        const flexMessage = generateTargetedHistoryFlex(myQueue, logs);
         return client.replyMessage(event.replyToken, flexMessage);
 
     } catch (e) {
-        console.error("Check Status Error:", e);
-        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ เกิดข้อผิดพลาด ไม่สามารถดึงข้อมูลได้" });
+        console.error("History Error:", e);
+        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ เกิดข้อผิดพลาดในการดึงข้อมูล" });
     }
 }
 
@@ -367,52 +381,77 @@ function generateStatusFlex(targetQueue, status) {
     };
 }
 
-function generateHistoryFlex(logs) {
+function generateTargetedHistoryFlex(myQueue, logs) {
+    // คำนวณคิวที่เหลือ
+    const latestQueue = parseInt(logs[0].current_queue);
+    const diff = myQueue - latestQueue;
+
+    let headerTitle = "";
+    let headerColor = "#000000";
+    let subTitle = "";
+
+    if (diff > 0) {
+        headerTitle = `รออีก ${diff} คิว`;
+        headerColor = "#1DB446"; // เขียว
+        subTitle = `คิวล่าสุด: ${latestQueue}`;
+    } else if (diff === 0) {
+        headerTitle = "ถึงคิวแล้ว!";
+        headerColor = "#D93025"; // แดง
+        subTitle = `เชิญช่อง: ${logs[0].current_counter}`;
+    } else {
+        headerTitle = "เลยคิวแล้ว";
+        headerColor = "#555555"; // เทา
+        subTitle = `คิวล่าสุดไปที่: ${latestQueue}`;
+    }
+
     const listItems = logs.map(log => {
-        // บังคับแสดงเวลาเป็น Asia/Bangkok
         const time = new Date(log.created_at).toLocaleTimeString('th-TH', { 
-            timeZone: 'Asia/Bangkok', 
-            hour: '2-digit', 
-            minute: '2-digit' 
+            timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' 
         });
+        const isLatest = (log.current_queue === latestQueue);
         
         return {
             type: "box",
             layout: "horizontal",
             contents: [
-                { type: "text", text: `${time}`, size: "sm", color: "#888888", flex: 2 },
-                { type: "text", text: `คิว ${log.current_queue}`, size: "sm", color: "#333333", weight: "bold", flex: 3 },
-                { type: "text", text: `ช่อง ${log.current_counter}`, size: "sm", color: "#1DB446", align: "end", flex: 2 }
+                { type: "text", text: `${time}`, size: "sm", color: isLatest ? "#333333" : "#888888", flex: 2 },
+                { type: "text", text: `คิว ${log.current_queue}`, size: "sm", color: "#333333", weight: isLatest ? "bold" : "regular", flex: 3 },
+                { type: "text", text: `ช่อง ${log.current_counter}`, size: "sm", color: isLatest ? "#D93025" : "#1DB446", align: "end", flex: 2, weight: isLatest ? "bold" : "regular" }
             ],
-            margin: "sm"
+            margin: "sm",
+            backgroundColor: isLatest ? "#f0fdf4" : "#ffffff",
+            paddingAll: isLatest ? "sm" : "none",
+            cornerRadius: isLatest ? "md" : "none"
         };
     });
 
     return {
         type: "flex",
-        altText: "รายการเรียกคิวล่าสุด",
+        altText: `เหลืออีก ${diff} คิว`,
         contents: {
             type: "bubble",
             body: {
                 type: "box",
                 layout: "vertical",
                 contents: [
-                    { type: "text", text: "📋 รายการเรียกคิวล่าสุด", weight: "bold", size: "md", color: "#1DB446" },
-                    { type: "separator", margin: "md" },
                     {
-                        type: "box",
-                        layout: "vertical",
-                        margin: "md",
-                        contents: listItems
-                    }
+                        type: "box", layout: "vertical", backgroundColor: "#f7f7f7", cornerRadius: "lg", paddingAll: "lg",
+                        contents: [
+                            { type: "text", text: "คิวของคุณ", size: "xs", color: "#aaaaaa", align: "center" },
+                            { type: "text", text: `${myQueue}`, size: "xl", weight: "bold", color: "#333333", align: "center" },
+                            { type: "separator", margin: "md" },
+                            { type: "text", text: headerTitle, size: "xxl", weight: "bold", color: headerColor, align: "center", margin: "md" },
+                            { type: "text", text: subTitle, size: "sm", color: "#555555", align: "center", margin: "sm" }
+                        ]
+                    },
+                    { type: "separator", margin: "lg" },
+                    { type: "text", text: "ประวัติการเรียก (หมวดนี้)", weight: "bold", size: "sm", margin: "lg", color: "#aaaaaa" },
+                    { type: "box", layout: "vertical", margin: "md", contents: listItems }
                 ]
             },
             footer: {
-                type: "box",
-                layout: "vertical",
-                contents: [
-                    { type: "text", text: "กด 'ล่าสุด' เพื่ออัปเดตข้อมูล", size: "xs", color: "#aaaaaa", align: "center" }
-                ]
+                type: "box", layout: "vertical",
+                contents: [{ type: "text", text: "กด 'ล่าสุด' เพื่อรีเฟรชข้อมูล", size: "xs", color: "#aaaaaa", align: "center" }]
             }
         }
     };
