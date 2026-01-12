@@ -40,7 +40,7 @@ async function handleEvent(event) {
     const isNumberOnly = /^\d+$/.test(text);
     const isTrackCommand = text.startsWith('ติดตามคิว');
 
-    // 1. สั่งติดตามคิว (เช่น "4012")
+    // 1. สั่งติดตามคิว
     if (isNumberOnly || isTrackCommand) {
         return await processQueueTracking(event, userId, text, isNumberOnly);
     } 
@@ -48,11 +48,11 @@ async function handleEvent(event) {
     else if (text === 'หยุด') {
         return await processStopTracking(event, userId);
     } 
-    // 3. กดปุ่ม "ล่าสุด" หรือพิมพ์ "ล่าสุด"
-    else if (text === 'ล่าสุด' || text === 'สถานะ' || text === 'ประวัติ') {
-        return await processCheckLatestStatus(event, userId);
+    // 3. ดูประวัติล่าสุด (เรียกฟังก์ชันดึง 10 รายการกลับมาแล้ว ✅)
+    else if (text === 'ล่าสุด' || text === 'ประวัติ') {
+        return await processViewHistory(event);
     } 
-    // 4. อื่นๆ -> ส่งเมนู
+    // 4. เมนูหลัก
     else {
         return await sendWelcomeMenu(event);
     }
@@ -62,7 +62,7 @@ async function handleEvent(event) {
 // 🧠 BUSINESS LOGIC
 // =======================================================
 
-// 🔹 ฟังก์ชัน 1: เริ่มติดตามคิว
+// 🔹 1. เริ่มติดตามคิว
 async function processQueueTracking(event, userId, text, isNumberOnly) {
     let queueInput = isNumberOnly ? text : text.replace('ติดตามคิว', '').trim();
     if (!queueInput || isNaN(queueInput)) {
@@ -70,60 +70,82 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
     }
     const targetQueue = parseInt(queueInput);
 
-    // 1. ดึงสถานะปัจจุบัน
-    const status = await getSmartQueueStatus(targetQueue);
-
-    // 2. บันทึกลง DB
+    // บันทึกลง DB
     const { error } = await supabase.from('line_trackers').upsert({ 
         user_id: userId, 
         tracking_queue: targetQueue 
     });
 
     if (error) {
-        console.error("DB Error:", error);
-        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง ชั่วคราว" });
+        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
     }
 
-    // 3. สร้าง Flex Message สวยๆ
-    const flexMessage = generateStatusFlex(targetQueue, status);
-    return client.replyMessage(event.replyToken, flexMessage);
+    // เมื่อเริ่มติดตาม ให้แสดงหน้า "ประวัติ/สถานะ" ทันที เพื่อความสวยงาม
+    return await processViewHistory(event, targetQueue); // ส่งเลขคิวไปเลยจะได้ไม่ต้อง Query ซ้ำ
 }
 
-// 🔹 ฟังก์ชัน 2: กดปุ่ม "ล่าสุด" เพื่อเช็คสถานะ
-async function processCheckLatestStatus(event, userId) {
-    // 1. ไปดูใน DB ว่าคนนี้ติดตามคิวอะไรอยู่
-    const { data: tracker } = await supabase
-        .from('line_trackers')
-        .select('tracking_queue')
-        .eq('user_id', userId)
-        .maybeSingle();
+// 🔹 2. ดูประวัติ (ฟังก์ชันที่หายไป เอากลับมาแล้ว ✅)
+async function processViewHistory(event, knownQueue = null) {
+    const userId = event.source.userId;
 
-    if (!tracker) {
-        return client.replyMessage(event.replyToken, { 
-            type: 'text', 
-            text: "❌ ท่านยังไม่ได้ติดตามคิว\nกรุณาพิมพ์เลขคิวของท่านก่อน (เช่น 4012)" 
-        });
+    try {
+        let myQueue = knownQueue;
+
+        // ถ้าไม่รู้เลขคิว (กรณีพิมพ์ "ล่าสุด" เข้ามาเอง) ให้ไปหาใน DB
+        if (!myQueue) {
+            const { data: tracker } = await supabase
+                .from('line_trackers')
+                .select('tracking_queue')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (!tracker) {
+                return client.replyMessage(event.replyToken, {
+                    type: 'text',
+                    text: "❌ ท่านยังไม่ได้ติดตามคิว\nกรุณาพิมพ์เลขคิวของท่านก่อน (เช่น 4012)"
+                });
+            }
+            myQueue = parseInt(tracker.tracking_queue);
+        }
+
+        // คำนวณหมวดหมู่ (เช่น 4xxx)
+        const seriesStart = Math.floor(myQueue / 1000) * 1000;
+        const seriesEnd = seriesStart + 1000;
+
+        // ดึง 10 รายการล่าสุด
+        const { data: logs } = await supabase
+            .from('queue_snapshots')
+            .select('current_queue, current_counter, created_at')
+            .gte('current_queue', seriesStart) 
+            .lt('current_queue', seriesEnd)    
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (!logs || logs.length === 0) {
+            return client.replyMessage(event.replyToken, { 
+                type: 'text', 
+                text: `⏳ ยังไม่มีการเรียกคิวในหมวด ${seriesStart} วันนี้` 
+            });
+        }
+
+        // สร้าง Flex Message แบบรายการ (ตัวเดิมที่เคยใช้)
+        const flexMessage = generateHistoryFlex(myQueue, logs);
+        return client.replyMessage(event.replyToken, flexMessage);
+
+    } catch (e) {
+        console.error("History Error:", e);
+        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ เกิดข้อผิดพลาดในการดึงข้อมูล" });
     }
-
-    const targetQueue = parseInt(tracker.tracking_queue);
-
-    // 2. ดึงสถานะปัจจุบันของคิวนั้น
-    const status = await getSmartQueueStatus(targetQueue);
-
-    // 3. สร้าง Flex Message ตอบกลับ (หน้าตาเหมือนตอนเริ่มติดตาม แต่ข้อมูลอัปเดต)
-    const flexMessage = generateStatusFlex(targetQueue, status);
-    return client.replyMessage(event.replyToken, flexMessage);
 }
 
-// 🔹 ฟังก์ชัน 3: ยกเลิก
+// 🔹 3. ยกเลิก
 async function processStopTracking(event, userId) {
     await supabase.from('line_trackers').delete().eq('user_id', userId);
     return client.replyMessage(event.replyToken, { type: 'text', text: '❌ ยกเลิกการติดตามเรียบร้อยแล้ว' });
 }
 
-// 🔹 ฟังก์ชัน 4: เมนูหลัก
+// 🔹 4. เมนูหลัก
 async function sendWelcomeMenu(event) {
-    // ส่ง Flex Message แนะนำตัวง่ายๆ
     return client.replyMessage(event.replyToken, {
         type: 'flex',
         altText: 'เมนูหลัก',
@@ -141,114 +163,126 @@ async function sendWelcomeMenu(event) {
 }
 
 // =======================================================
-// 🛠️ HELPER FUNCTIONS (ตัวช่วยดึงข้อมูล)
+// 🛠️ HELPER FUNCTIONS
 // =======================================================
 
+// (ส่วนนี้อาจจะไม่ได้ใช้โดยตรงใน Logic นี้ แต่เก็บไว้เผื่อขยายผล)
 async function getSmartQueueStatus(targetQueue) {
-    try {
-        const seriesStart = Math.floor(targetQueue / 1000) * 1000;
-        const seriesEnd = seriesStart + 1000;
-        
-        // ดึงข้อมูลล่าสุดจาก Snapshot ที่ Worker (บน VPS) เป็นคนบันทึกไว้
-        const { data: snapshots } = await supabase
-            .from('queue_snapshots') 
-            .select('current_queue, current_counter')
-            .gte('current_queue', seriesStart)
-            .lt('current_queue', seriesEnd)
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-        if (snapshots && snapshots.length > 0) {
-            return { 
-                currentQueue: parseInt(snapshots[0].current_queue), 
-                counter: snapshots[0].current_counter 
-            };
-        }
-    } catch (e) { console.error("Fetch Status Error:", e); }
-    return { currentQueue: 0, counter: '-' };
+    // ... Logic เดิม ...
+    return { queue: 0, counter: '-' }; 
 }
 
 // =======================================================
-// 🎨 FLEX MESSAGE GENERATOR (พระเอกของเรา)
+// 🎨 FLEX MESSAGE GENERATOR (เอารูปแบบตารางกลับมา ✅)
 // =======================================================
 
-function generateStatusFlex(targetQueue, status) {
-    const { currentQueue, counter } = status;
-    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${targetQueue}`; // แก้ลิ้งก์บอทของคุณให้ตรง
+function generateHistoryFlex(myQueue, logs) {
+    // คำนวณคิวที่เหลือ (เทียบกับรายการล่าสุดอันบนสุด)
+    const latestQueue = parseInt(logs[0].current_queue);
+    const diff = myQueue - latestQueue;
+    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`;
 
-    let statusText = "รอเรียกคิว";
-    let statusColor = "#1DB446"; // เขียว
-    let descText = "ยังไม่มีข้อมูลในระบบ";
-    
-    if (currentQueue > 0) {
-        const diff = targetQueue - currentQueue;
-        
-        if (diff === 0) {
-            statusText = "ถึงคิวแล้ว!";
-            statusColor = "#D93025"; // แดง
-            descText = `เชิญที่ช่องบริการ ${counter}`;
-        } else if (diff === 1) {
-            statusText = "คิวถัดไป";
-            statusColor = "#F9AB00"; // ส้ม
-            descText = "เตรียมตัวรอเรียกได้เลย";
-        } else if (diff > 1) {
-            statusText = `รออีก ${diff} คิว`;
-            statusColor = "#1DB446"; // เขียว
-            descText = `คิวปัจจุบัน: ${currentQueue}`;
-        } else if (diff < 0) {
-            statusText = "เลยคิวแล้ว";
-            statusColor = "#555555"; // เทา
-            descText = `คิวไปที่ ${currentQueue} แล้ว`;
-        }
+    let headerTitle = "";
+    let headerColor = "#000000";
+    let subTitle = "";
+
+    if (diff > 0) {
+        headerTitle = `รออีก ${diff} คิว`;
+        headerColor = "#1DB446"; // เขียว
+        subTitle = `คิวล่าสุด: ${latestQueue}`;
+    } else if (diff === 0) {
+        headerTitle = "ถึงคิวแล้ว!";
+        headerColor = "#D93025"; // แดง
+        subTitle = `เชิญช่อง: ${logs[0].current_counter}`;
+    } else if (diff < 0) {
+        headerTitle = "เลยคิวแล้ว";
+        headerColor = "#555555"; // เทา
+        subTitle = `คิวล่าสุดไปที่: ${latestQueue}`;
     }
+
+    // สร้างลิสต์ 10 รายการ
+    const listItems = logs.map(log => {
+        const time = new Date(log.created_at).toLocaleTimeString('th-TH', { 
+            timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' 
+        });
+        
+        const isLatest = (log.current_queue === latestQueue);
+        
+        return {
+            type: "box",
+            layout: "horizontal",
+            contents: [
+                { type: "text", text: `${time}`, size: "sm", color: isLatest ? "#333333" : "#888888", flex: 2 },
+                { type: "text", text: `คิว ${log.current_queue}`, size: "sm", color: "#333333", weight: isLatest ? "bold" : "regular", flex: 3 },
+                { type: "text", text: `ช่อง ${log.current_counter}`, size: "sm", color: isLatest ? "#D93025" : "#1DB446", align: "end", flex: 2, weight: isLatest ? "bold" : "regular" }
+            ],
+            margin: "sm",
+            backgroundColor: isLatest ? "#f0fdf4" : "#ffffff", // ไฮไลท์แถวบนสุด
+            paddingAll: isLatest ? "sm" : "none",
+            cornerRadius: isLatest ? "md" : "none"
+        };
+    });
 
     return {
         type: "flex",
-        altText: `สถานะคิว ${targetQueue}: ${statusText}`,
+        altText: `เหลืออีก ${diff} คิว`,
         contents: {
             type: "bubble",
-            size: "kilo",
+            // ส่วน Header: สรุปสถานะ
             header: {
                 type: "box",
                 layout: "vertical",
-                backgroundColor: statusColor,
+                backgroundColor: "#f7f7f7",
                 contents: [
-                    { type: "text", text: "สถานะคิวของคุณ", color: "#ffffff", size: "xs", align: "center" },
-                    { type: "text", text: statusText, color: "#ffffff", weight: "bold", size: "xxl", align: "center", margin: "sm" }
+                    { type: "text", text: "คิวของคุณ", size: "xs", color: "#aaaaaa", align: "center" },
+                    { type: "text", text: `${myQueue}`, size: "xxl", weight: "bold", color: "#333333", align: "center" },
+                    { type: "separator", margin: "md" },
+                    { type: "text", text: headerTitle, size: "xl", weight: "bold", color: headerColor, align: "center", margin: "md" },
+                    { type: "text", text: subTitle, size: "sm", color: "#555555", align: "center", margin: "sm" }
                 ]
             },
+            // ส่วน Body: ตารางรายการ
             body: {
                 type: "box",
                 layout: "vertical",
                 contents: [
-                    // แสดงเลขคิวของคุณ
-                    { type: "text", text: "บัตรคิวของคุณ", color: "#aaaaaa", size: "xs", align: "center" },
-                    { type: "text", text: `${targetQueue}`, weight: "bold", size: "4xl", color: "#333333", align: "center" },
-                    
-                    { type: "separator", margin: "lg" },
-                    
-                    // แสดงรายละเอียด
-                    { type: "text", text: descText, size: "md", color: "#555555", align: "center", margin: "lg", wrap: true }
+                    {
+                        type: "text",
+                        text: "ประวัติการเรียก (หมวดนี้)",
+                        weight: "bold",
+                        size: "sm",
+                        color: "#aaaaaa",
+                        margin: "md"
+                    },
+                    {
+                        type: "separator",
+                        margin: "sm"
+                    },
+                    {
+                        type: "box",
+                        layout: "vertical",
+                        margin: "md",
+                        contents: listItems
+                    }
                 ]
             },
+            // ส่วน Footer: ปุ่มกด
             footer: {
                 type: "box",
                 layout: "vertical",
                 spacing: "sm",
                 contents: [
-                    // ปุ่มที่ 1: อัปเดตสถานะ (ส่งข้อความ "ล่าสุด" กลับมา)
                     {
                         type: "button",
                         style: "secondary",
                         height: "sm",
                         action: { type: "message", label: "🔄 อัปเดตสถานะ", text: "ล่าสุด" }
                     },
-                    // ปุ่มที่ 2: ไป Telegram (ทางเลือก)
                     {
                         type: "button",
                         style: "link",
                         height: "sm",
-                        action: { type: "uri", label: "🔔 แจ้งเตือนผ่าน Telegram", uri: telegramDeepLink }
+                        action: { type: "uri", label: "🔔 แจ้งเตือน Telegram", uri: telegramDeepLink }
                     }
                 ]
             }
