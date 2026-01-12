@@ -13,7 +13,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY
 const client = new line.Client(config);
 
 // =======================================================
-// 🚀 MAIN HANDLER
+// 🚀 MAIN HANDLER (Vercel)
 // =======================================================
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
@@ -48,7 +48,7 @@ async function handleEvent(event) {
     else if (text === 'หยุด') {
         return await processStopTracking(event, userId);
     } 
-    // 3. ดูประวัติล่าสุด (เรียกฟังก์ชันดึง 10 รายการกลับมาแล้ว ✅)
+    // 3. ดูประวัติล่าสุด (เรียกฟังก์ชันดึง 10 รายการ)
     else if (text === 'ล่าสุด' || text === 'ประวัติ') {
         return await processViewHistory(event);
     } 
@@ -81,10 +81,10 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
     }
 
     // เมื่อเริ่มติดตาม ให้แสดงหน้า "ประวัติ/สถานะ" ทันที เพื่อความสวยงาม
-    return await processViewHistory(event, targetQueue); // ส่งเลขคิวไปเลยจะได้ไม่ต้อง Query ซ้ำ
+    return await processViewHistory(event, targetQueue); 
 }
 
-// 🔹 2. ดูประวัติ (ฟังก์ชันที่หายไป เอากลับมาแล้ว ✅)
+// 🔹 2. ดูประวัติ (ดึง 10 รายการย้อนหลัง)
 async function processViewHistory(event, knownQueue = null) {
     const userId = event.source.userId;
 
@@ -128,7 +128,7 @@ async function processViewHistory(event, knownQueue = null) {
             });
         }
 
-        // สร้าง Flex Message แบบรายการ (ตัวเดิมที่เคยใช้)
+        // สร้าง Flex Message แบบตารางรายการ
         const flexMessage = generateHistoryFlex(myQueue, logs);
         return client.replyMessage(event.replyToken, flexMessage);
 
@@ -151,11 +151,44 @@ async function sendWelcomeMenu(event) {
         altText: 'เมนูหลัก',
         contents: {
             type: "bubble",
+            hero: {
+                type: "image",
+                url: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
+                size: "full",
+                aspectRatio: "20:13",
+                aspectMode: "cover",
+                backgroundColor: "#eeeeee"
+            },
             body: {
-                type: "box", layout: "vertical",
+                type: "box",
+                layout: "vertical",
                 contents: [
                     { type: "text", text: "ระบบติดตามคิวที่ดิน", weight: "bold", size: "xl", color: "#1DB446" },
-                    { type: "text", text: "พิมพ์เลขคิวเพื่อเริ่มติดตาม", size: "sm", color: "#555555" }
+                    { type: "text", text: "จ.นครสวรรค์", weight: "bold", size: "md", margin: "sm" },
+                    { type: "separator", margin: "md" },
+                    { type: "text", text: "พิมพ์เลขคิวเพื่อเริ่มติดตาม", margin: "md", size: "sm", color: "#555555" },
+                    { type: "text", text: "ตัวอย่าง: 4012", size: "xs", color: "#aaaaaa", margin: "xs" }
+                ]
+            },
+            footer: {
+                type: "box",
+                layout: "vertical",
+                spacing: "sm",
+                contents: [
+                    // ปุ่มที่ 1: ดูประวัติ
+                    {
+                        type: "button",
+                        style: "secondary",
+                        height: "sm",
+                        action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
+                    },
+                    // ปุ่มที่ 2: ดูเว็บ
+                    {
+                        type: "button",
+                        style: "link",
+                        height: "sm",
+                        action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" }
+                    }
                 ]
             }
         }
@@ -163,28 +196,16 @@ async function sendWelcomeMenu(event) {
 }
 
 // =======================================================
-// 🛠️ HELPER FUNCTIONS
-// =======================================================
-
-// (ส่วนนี้อาจจะไม่ได้ใช้โดยตรงใน Logic นี้ แต่เก็บไว้เผื่อขยายผล)
-async function getSmartQueueStatus(targetQueue) {
-    // ... Logic เดิม ...
-    return { queue: 0, counter: '-' }; 
-}
-
-// =======================================================
-// 🎨 FLEX MESSAGE GENERATOR (เอารูปแบบตารางกลับมา ✅)
+// 🎨 FLEX MESSAGE GENERATOR
 // =======================================================
 
 function generateHistoryFlex(myQueue, logs) {
     // คำนวณคิวที่เหลือ (เทียบกับรายการล่าสุดอันบนสุด)
     const latestQueue = parseInt(logs[0].current_queue);
     const diff = myQueue - latestQueue;
-    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`;
+    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`; // แก้ชื่อบอทให้ตรง
 
-    let headerTitle = "";
-    let headerColor = "#000000";
-    let subTitle = "";
+    let headerTitle = "", headerColor = "#000000", subTitle = "";
 
     if (diff > 0) {
         headerTitle = `รออีก ${diff} คิว`;
@@ -194,7 +215,7 @@ function generateHistoryFlex(myQueue, logs) {
         headerTitle = "ถึงคิวแล้ว!";
         headerColor = "#D93025"; // แดง
         subTitle = `เชิญช่อง: ${logs[0].current_counter}`;
-    } else if (diff < 0) {
+    } else {
         headerTitle = "เลยคิวแล้ว";
         headerColor = "#555555"; // เทา
         subTitle = `คิวล่าสุดไปที่: ${latestQueue}`;
@@ -217,7 +238,7 @@ function generateHistoryFlex(myQueue, logs) {
                 { type: "text", text: `ช่อง ${log.current_counter}`, size: "sm", color: isLatest ? "#D93025" : "#1DB446", align: "end", flex: 2, weight: isLatest ? "bold" : "regular" }
             ],
             margin: "sm",
-            backgroundColor: isLatest ? "#f0fdf4" : "#ffffff", // ไฮไลท์แถวบนสุด
+            backgroundColor: isLatest ? "#f0fdf4" : "#ffffff",
             paddingAll: isLatest ? "sm" : "none",
             cornerRadius: isLatest ? "md" : "none"
         };
@@ -246,27 +267,12 @@ function generateHistoryFlex(myQueue, logs) {
                 type: "box",
                 layout: "vertical",
                 contents: [
-                    {
-                        type: "text",
-                        text: "ประวัติการเรียก (หมวดนี้)",
-                        weight: "bold",
-                        size: "sm",
-                        color: "#aaaaaa",
-                        margin: "md"
-                    },
-                    {
-                        type: "separator",
-                        margin: "sm"
-                    },
-                    {
-                        type: "box",
-                        layout: "vertical",
-                        margin: "md",
-                        contents: listItems
-                    }
+                    { type: "text", text: "ประวัติการเรียก (หมวดนี้)", weight: "bold", size: "sm", color: "#aaaaaa", margin: "md" },
+                    { type: "separator", margin: "sm" },
+                    { type: "box", layout: "vertical", margin: "md", contents: listItems }
                 ]
             },
-            // ส่วน Footer: ปุ่มกด
+            // ส่วน Footer: 3 ปุ่มกด
             footer: {
                 type: "box",
                 layout: "vertical",
@@ -280,9 +286,16 @@ function generateHistoryFlex(myQueue, logs) {
                     },
                     {
                         type: "button",
+                        style: "primary",
+                        height: "sm",
+                        color: "#2481cc",
+                        action: { type: "uri", label: "🔔 แจ้งเตือน Telegram", uri: telegramDeepLink }
+                    },
+                    {
+                        type: "button",
                         style: "link",
                         height: "sm",
-                        action: { type: "uri", label: "🔔 แจ้งเตือน Telegram", uri: telegramDeepLink }
+                        action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" }
                     }
                 ]
             }
