@@ -161,24 +161,43 @@ async function processStopTracking(event, userId) {
     });
 }
 
+// =======================================================
+// 🔄 ฟังก์ชัน: เช็คสถานะคิวของตัวเอง (แก้ใหม่)
+// =======================================================
 async function processViewHistory(event) {
-    try {
-        const { data: logs } = await supabase
-            .from('queue_snapshots')
-            .select('current_queue, current_counter, created_at')
-            .order('created_at', { ascending: false })
-            .limit(10);
+    const userId = event.source.userId;
 
-        if (!logs || logs.length === 0) {
-            return client.replyMessage(event.replyToken, { type: 'text', text: "⏳ ยังไม่มีข้อมูลการเรียกคิวในวันนี้" });
+    try {
+        // 1. ค้นหาว่า User คนนี้กำลังติดตามคิวอะไรอยู่
+        const { data: tracker, error } = await supabase
+            .from('line_trackers')
+            .select('tracking_queue')
+            .eq('user_id', userId)
+            .maybeSingle(); // ดึงมา 1 รายการ
+
+        // กรณีไม่พบข้อมูล (ยังไม่ได้ติดตามคิว)
+        if (!tracker) {
+            return client.replyMessage(event.replyToken, {
+                type: 'text',
+                text: "❌ ท่านยังไม่ได้ติดตามคิวใดๆ\n\nกรุณาพิมพ์ 'เลขคิว' ที่ต้องการติดตามก่อนครับ (เช่น 4012)"
+            });
         }
 
-        const flexMessage = generateHistoryFlex(logs);
+        const targetQueue = parseInt(tracker.tracking_queue);
+
+        // 2. ดึงสถานะคิวล่าสุด (ใช้ฟังก์ชันเดิมที่มีอยู่แล้ว)
+        // มันจะไปคำนวณหาคิวปัจจุบันในหมวดนั้นๆ ให้เอง
+        const status = await getSmartQueueStatus(targetQueue);
+
+        // 3. สร้าง Flex Message แสดงผล (ใช้แบบเดียวกับตอนพิมพ์เลขคิว สวยและครบถ้วน)
+        // ซึ่งในฟังก์ชันนี้มีการคำนวณ "รออีก X คิว" ให้อยู่แล้ว
+        const flexMessage = generateStatusFlex(targetQueue, status);
+        
         return client.replyMessage(event.replyToken, flexMessage);
 
     } catch (e) {
-        console.error("History Error:", e);
-        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ไม่สามารถดึงข้อมูลได้" });
+        console.error("Check Status Error:", e);
+        return client.replyMessage(event.replyToken, { type: 'text', text: "❌ เกิดข้อผิดพลาด ไม่สามารถดึงข้อมูลได้" });
     }
 }
 
@@ -398,4 +417,5 @@ function generateHistoryFlex(logs) {
         }
     };
 }
+
 
