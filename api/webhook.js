@@ -35,24 +35,30 @@ async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return null;
 
     const userId = event.source.userId;
-    const text = event.message.text.trim();
+    const text = event.message.text.trim(); // ตัดช่องว่างหน้าหลังออก
 
     const isNumberOnly = /^\d+$/.test(text);
     const isTrackCommand = text.startsWith('ติดตามคิว');
+
+    console.log(`User: ${userId} sent: ${text}`); // 📝 ดู Log ใน Vercel ได้
 
     // 1. สั่งติดตามคิว
     if (isNumberOnly || isTrackCommand) {
         return await processQueueTracking(event, userId, text, isNumberOnly);
     } 
     // 2. สั่งยกเลิก
-    else if (text === 'หยุด') {
+    else if (text === 'หยุด' || text === 'ยกเลิก') {
         return await processStopTracking(event, userId);
     } 
     // 3. ดูประวัติล่าสุด
-    else if (text === 'ล่าสุด' || text === 'ประวัติ') {
+    else if (text === 'ล่าสุด' || text === 'ประวัติ' || text === 'สถานะ') {
         return await processViewHistory(event);
+    }
+    // 4. สั่งดูคู่มือ (เพิ่มตรงนี้ให้ชัดเจน) ✅
+    else if (text === 'คู่มือ' || text === 'เมนู' || text === 'help') {
+        return await sendWelcomeMenu(event);
     } 
-    // 4. พิมพ์อย่างอื่น -> ส่งเมนูคู่มือ (แบบไม่มีรูป) ✅
+    // 5. พิมพ์อย่างอื่น -> ส่งเมนูเหมือนกัน
     else {
         return await sendWelcomeMenu(event);
     }
@@ -143,92 +149,100 @@ async function processStopTracking(event, userId) {
     return client.replyMessage(event.replyToken, { type: 'text', text: '❌ ยกเลิกการติดตามเรียบร้อยแล้ว' });
 }
 
-// 🔹 4. เมนูหลัก
+// 🔹 4. เมนูหลัก (ปรับปรุงใหม่)
 async function sendWelcomeMenu(event) {
-    return client.replyMessage(event.replyToken, {
-        type: 'flex',
-        altText: 'คู่มือการใช้งาน',
-        contents: {
-            type: "bubble",
-            // ❌ ตัดส่วน hero (รูปภาพ) ออกแล้ว กัน Error
-            body: {
-                type: "box",
-                layout: "vertical",
-                contents: [
-                    { type: "text", text: "วิธีการใช้งาน", weight: "bold", size: "xl", color: "#1DB446", align: "center" },
-                    { type: "text", text: "ระบบติดตามคิวที่ดิน จ.นครสวรรค์", weight: "bold", size: "xs", color: "#aaaaaa", align: "center", margin: "xs" },
-                    { type: "separator", margin: "md" },
-                    
-                    // ข้อ 1
-                    {
-                        type: "box", layout: "horizontal", margin: "md",
-                        contents: [
-                            { type: "text", text: "1️⃣", size: "md", flex: 1 },
-                            {
-                                type: "box", layout: "vertical", flex: 9,
-                                contents: [
-                                    { type: "text", text: "พิมพ์เลขคิว", weight: "bold", size: "sm", color: "#333333" },
-                                    { type: "text", text: "เช่น 4012 แล้วกดส่ง", size: "xs", color: "#888888" }
-                                ]
-                            }
-                        ]
-                    },
-                    
-                    // ข้อ 2
-                    {
-                        type: "box", layout: "horizontal", margin: "md",
-                        contents: [
-                            { type: "text", text: "2️⃣", size: "md", flex: 1 },
-                            {
-                                type: "box", layout: "vertical", flex: 9,
-                                contents: [
-                                    { type: "text", text: "รอรับการแจ้งเตือน", weight: "bold", size: "sm", color: "#333333" },
-                                    { type: "text", text: "เมื่อคิวขยับ ระบบจะแจ้งทันที", size: "xs", color: "#888888" }
-                                ]
-                            }
-                        ]
-                    },
-
-                    // ข้อ 3
-                    {
-                        type: "box", layout: "horizontal", margin: "md",
-                        contents: [
-                            { type: "text", text: "3️⃣", size: "md", flex: 1 },
-                            {
-                                type: "box", layout: "vertical", flex: 9,
-                                contents: [
-                                    { type: "text", text: "เช็คสถานะล่าสุด", weight: "bold", size: "sm", color: "#333333" },
-                                    { type: "text", text: "กดปุ่มด้านล่างได้ตลอดเวลา", size: "xs", color: "#888888" }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            },
-            footer: {
-                type: "box",
-                layout: "vertical",
-                spacing: "sm",
-                contents: [
-                    { type: "separator" },
-                    { type: "spacer", size: "md" },
-                    {
-                        type: "button",
-                        style: "primary",
-                        color: "#1DB446",
-                        height: "sm",
-                        action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
-                    },
-                    {
-                        type: "button",
-                        style: "secondary",
-                        height: "sm",
-                        action: { type: "uri", label: "🌐 ติดตามคิวผ่านเว็บไซต์", uri: "https://queue-monitor.vercel.app" }
-                    }
-                ]
+    try {
+        return await client.replyMessage(event.replyToken, {
+            type: 'flex',
+            altText: 'คู่มือการใช้งานระบบจองคิว',
+            contents: {
+                type: "bubble",
+                body: {
+                    type: "box",
+                    layout: "vertical",
+                    contents: [
+                        { type: "text", text: "วิธีการใช้งาน", weight: "bold", size: "xl", color: "#1DB446", align: "center" },
+                        { type: "text", text: "ระบบติดตามคิวที่ดิน จ.นครสวรรค์", weight: "bold", size: "xs", color: "#aaaaaa", align: "center", margin: "xs" },
+                        { type: "separator", margin: "md" },
+                        
+                        // ข้อ 1
+                        {
+                            type: "box", layout: "horizontal", margin: "md",
+                            contents: [
+                                { type: "text", text: "1️⃣", size: "md", flex: 1 },
+                                {
+                                    type: "box", layout: "vertical", flex: 9,
+                                    contents: [
+                                        { type: "text", text: "พิมพ์เลขคิว", weight: "bold", size: "sm", color: "#333333" },
+                                        { type: "text", text: "เช่น 4012 แล้วกดส่ง", size: "xs", color: "#888888", wrap: true }
+                                    ]
+                                }
+                            ]
+                        },
+                        
+                        // ข้อ 2
+                        {
+                            type: "box", layout: "horizontal", margin: "md",
+                            contents: [
+                                { type: "text", text: "2️⃣", size: "md", flex: 1 },
+                                {
+                                    type: "box", layout: "vertical", flex: 9,
+                                    contents: [
+                                        { type: "text", text: "รอรับการแจ้งเตือน", weight: "bold", size: "sm", color: "#333333" },
+                                        { type: "text", text: "เมื่อคิวขยับ ระบบจะแจ้งทันที", size: "xs", color: "#888888", wrap: true }
+                                    ]
+                                }
+                            ]
+                        },
+    
+                        // ข้อ 3
+                        {
+                            type: "box", layout: "horizontal", margin: "md",
+                            contents: [
+                                { type: "text", text: "3️⃣", size: "md", flex: 1 },
+                                {
+                                    type: "box", layout: "vertical", flex: 9,
+                                    contents: [
+                                        { type: "text", text: "เช็คสถานะล่าสุด", weight: "bold", size: "sm", color: "#333333" },
+                                        { type: "text", text: "กดปุ่มด้านล่างได้ตลอดเวลา", size: "xs", color: "#888888", wrap: true }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                footer: {
+                    type: "box",
+                    layout: "vertical",
+                    spacing: "sm",
+                    contents: [
+                        { type: "separator" },
+                        { type: "spacer", size: "md" },
+                        {
+                            type: "button",
+                            style: "primary",
+                            color: "#1DB446",
+                            height: "sm",
+                            action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
+                        },
+                        {
+                            type: "button",
+                            style: "secondary",
+                            height: "sm",
+                            action: { type: "uri", label: "🌐 ดูผ่านเว็บไซต์", uri: "https://queue-monitor.vercel.app" }
+                        }
+                    ]
+                }
             }
-        }
-    });
+        });
+    } catch (err) {
+        console.error("Menu Error:", err);
+        // Fallback: ถ้า Flex Error ให้ส่งข้อความธรรมดาแทน บอทจะได้ไม่เงียบ
+        return client.replyMessage(event.replyToken, { 
+            type: "text", 
+            text: "📝 วิธีใช้:\n1. พิมพ์เลขคิว (เช่น 4012)\n2. ระบบจะแจ้งเตือนเมื่อถึงคิว\n3. พิมพ์ 'ล่าสุด' เพื่อเช็คสถานะ" 
+        });
+    }
 }
 
 // =======================================================
@@ -346,3 +360,4 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
+
