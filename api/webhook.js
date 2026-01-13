@@ -52,13 +52,11 @@ async function handleEvent(event) {
     else if (text === 'ล่าสุด' || text === 'ประวัติ') {
         return await processViewHistory(event);
     } 
-    // 4. พิมพ์อย่างอื่น -> ส่งเมนูคู่มือ ✅ (ถ้าไม่มีบรรทัดนี้ พิมพ์มั่วมันจะเงียบ)
+    // 4. พิมพ์อย่างอื่น -> ส่งเมนูคู่มือ (แบบไม่มีรูป) ✅
     else {
-        console.log("Fallback: Sending Welcome Menu"); // เช็ค Log ได้
         return await sendWelcomeMenu(event);
     }
 }
-
 // =======================================================
 // 🧠 BUSINESS LOGIC
 // =======================================================
@@ -152,15 +150,7 @@ async function sendWelcomeMenu(event) {
         altText: 'คู่มือการใช้งาน',
         contents: {
             type: "bubble",
-            hero: {
-                type: "image",
-                // ✅ เปลี่ยน URL รูปภาพตรงนี้ครับ
-                url: "https://cdn-icons-png.flaticon.com/512/6348/6348001.png", 
-                size: "full",
-                aspectRatio: "20:13",
-                aspectMode: "cover",
-                backgroundColor: "#f0fdf4"
-            },
+            // ❌ ตัดส่วน hero (รูปภาพ) ออกแล้ว กัน Error
             body: {
                 type: "box",
                 layout: "vertical",
@@ -169,11 +159,9 @@ async function sendWelcomeMenu(event) {
                     { type: "text", text: "ระบบติดตามคิวที่ดิน จ.นครสวรรค์", weight: "bold", size: "xs", color: "#aaaaaa", align: "center", margin: "xs" },
                     { type: "separator", margin: "md" },
                     
-                    // ขั้นตอนที่ 1
+                    // ข้อ 1
                     {
-                        type: "box",
-                        layout: "horizontal",
-                        margin: "md",
+                        type: "box", layout: "horizontal", margin: "md",
                         contents: [
                             { type: "text", text: "1️⃣", size: "md", flex: 1 },
                             {
@@ -186,37 +174,31 @@ async function sendWelcomeMenu(event) {
                         ]
                     },
                     
-                    // ขั้นตอนที่ 2
+                    // ข้อ 2
                     {
-                        type: "box",
-                        layout: "horizontal",
-                        margin: "md",
+                        type: "box", layout: "horizontal", margin: "md",
                         contents: [
                             { type: "text", text: "2️⃣", size: "md", flex: 1 },
                             {
                                 type: "box", layout: "vertical", flex: 9,
                                 contents: [
                                     { type: "text", text: "รอรับการแจ้งเตือน", weight: "bold", size: "sm", color: "#333333" },
-                                    { type: "text", text: "• เมื่อเหลือ 5 คิวสุดท้าย", size: "xs", color: "#888888" },
-                                    { type: "text", text: "• เมื่อเป็นคิวถัดไป (เตรียมตัว)", size: "xs", color: "#888888" },
-                                    { type: "text", text: "• เมื่อถึงคิวของท่านแล้ว", size: "xs", color: "#888888" }
+                                    { type: "text", text: "เมื่อคิวขยับ ระบบจะแจ้งทันที", size: "xs", color: "#888888" }
                                 ]
                             }
                         ]
                     },
 
-                    // ขั้นตอนที่ 3
+                    // ข้อ 3
                     {
-                        type: "box",
-                        layout: "horizontal",
-                        margin: "md",
+                        type: "box", layout: "horizontal", margin: "md",
                         contents: [
                             { type: "text", text: "3️⃣", size: "md", flex: 1 },
                             {
                                 type: "box", layout: "vertical", flex: 9,
                                 contents: [
                                     { type: "text", text: "เช็คสถานะล่าสุด", weight: "bold", size: "sm", color: "#333333" },
-                                    { type: "text", text: "กดปุ่มด้านล่างเพื่อดูคิวปัจจุบัน", size: "xs", color: "#888888" }
+                                    { type: "text", text: "กดปุ่มด้านล่างได้ตลอดเวลา", size: "xs", color: "#888888" }
                                 ]
                             }
                         ]
@@ -228,22 +210,20 @@ async function sendWelcomeMenu(event) {
                 layout: "vertical",
                 spacing: "sm",
                 contents: [
-                    { type: "separator", margin: "none" },
+                    { type: "separator" },
                     { type: "spacer", size: "md" },
-                    // ปุ่มที่ 1: เช็คสถานะ
                     {
                         type: "button",
                         style: "primary",
                         color: "#1DB446",
                         height: "sm",
-                        action: { type: "message", label: "📋 เช็คคิวล่าสุด / ประวัติ", text: "ล่าสุด" }
+                        action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
                     },
-                    // ปุ่มที่ 2: ดูเว็บ
                     {
                         type: "button",
                         style: "secondary",
                         height: "sm",
-                        action: { type: "uri", label: "🌐 ดูจอคิวสด (Web)", uri: "https://queue-monitor.vercel.app" }
+                        action: { type: "uri", label: "🌐 ติดตามคิวผ่านเว็บไซต์", uri: "https://queue-monitor.vercel.app" }
                     }
                 ]
             }
@@ -358,6 +338,7 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
+
 
 
 
