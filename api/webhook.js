@@ -239,7 +239,7 @@ function generateHistoryFlex(myQueue, logs) {
     // คำนวณคิวที่เหลือ (เทียบกับรายการล่าสุดอันบนสุด)
     const latestQueue = parseInt(logs[0].current_queue);
     const diff = myQueue - latestQueue;
-    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`; // แก้ชื่อบอทให้ตรง
+    const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`; 
 
     let headerTitle = "", headerColor = "#000000", subTitle = "";
 
@@ -308,7 +308,7 @@ function generateHistoryFlex(myQueue, logs) {
                     { type: "box", layout: "vertical", margin: "md", contents: listItems }
                 ]
             },
-            // ส่วน Footer: 3 ปุ่มกด
+            // ส่วน Footer: แก้ไขเพิ่มปุ่มคู่มือตรงนี้
             footer: {
                 type: "box",
                 layout: "vertical",
@@ -327,6 +327,14 @@ function generateHistoryFlex(myQueue, logs) {
                         color: "#2481cc",
                         action: { type: "uri", label: "🔔 รับการแจ้งเตือนผ่าน Telegram (สำรอง)", uri: telegramDeepLink }
                     },
+                    // 👇 เพิ่มปุ่มนี้เข้าไปครับ 👇
+                    {
+                        type: "button",
+                        style: "secondary",
+                        height: "sm",
+                        action: { type: "message", label: "📖 คู่มือการใช้งาน", text: "คู่มือ" }
+                    },
+                    // 👆 จบส่วนที่เพิ่ม 👆
                     {
                         type: "button",
                         style: "link",
@@ -338,7 +346,3 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
-
-
-
-
