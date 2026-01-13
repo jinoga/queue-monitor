@@ -282,23 +282,24 @@ function generateHistoryFlex(myQueue, logs) {
                         type: "button",
                         style: "secondary",
                         height: "sm",
-                        action: { type: "message", label: "🔄 อัปเดตสถานะ", text: "ล่าสุด" }
+                        action: { type: "message", label: "🔄 อัปเดตสถานะคิวของท่าน", text: "ล่าสุด" }
                     },
                     {
                         type: "button",
                         style: "primary",
                         height: "sm",
                         color: "#2481cc",
-                        action: { type: "uri", label: "🔔 แจ้งเตือน Telegram", uri: telegramDeepLink }
+                        action: { type: "uri", label: "🔔 รับการแจ้งเตือนผ่าน Telegram (สำรอง)", uri: telegramDeepLink }
                     },
                     {
                         type: "button",
                         style: "link",
                         height: "sm",
-                        action: { type: "uri", label: "🌐 ดูคิวสด (Web)", uri: "https://queue-monitor.vercel.app" }
+                        action: { type: "uri", label: "🌐 ติดตามคิวผ่านเว็บไซต์", uri: "https://queue-monitor.vercel.app" }
                     }
                 ]
             }
         }
     };
 }
+
