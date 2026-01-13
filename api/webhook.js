@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 }
 
 // =======================================================
-// 🎮 EVENT ROUTER
+// 🎮 EVENT ROUTER (ตัวแยกแยะคำสั่ง)
 // =======================================================
 async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return null;
@@ -48,12 +48,13 @@ async function handleEvent(event) {
     else if (text === 'หยุด') {
         return await processStopTracking(event, userId);
     } 
-    // 3. ดูประวัติล่าสุด (เรียกฟังก์ชันดึง 10 รายการ)
+    // 3. ดูประวัติล่าสุด
     else if (text === 'ล่าสุด' || text === 'ประวัติ') {
         return await processViewHistory(event);
     } 
-    // 4. เมนูหลัก
+    // 4. พิมพ์อย่างอื่น -> ส่งเมนูคู่มือ ✅ (ถ้าไม่มีบรรทัดนี้ พิมพ์มั่วมันจะเงียบ)
     else {
+        console.log("Fallback: Sending Welcome Menu"); // เช็ค Log ได้
         return await sendWelcomeMenu(event);
     }
 }
@@ -357,5 +358,6 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
+
 
 
