@@ -149,10 +149,10 @@ async function processStopTracking(event, userId) {
     return client.replyMessage(event.replyToken, { type: 'text', text: '❌ ยกเลิกการติดตามเรียบร้อยแล้ว' });
 }
 
-// 🔹 4. เมนูหลัก (ปรับปรุงใหม่)
+// 🔹 4. เมนูหลัก (แก้ไขโครงสร้าง Footer)
 async function sendWelcomeMenu(event) {
     try {
-        return await client.replyMessage(event.replyToken, {
+        const flexMessage = {
             type: 'flex',
             altText: 'คู่มือการใช้งานระบบจองคิว',
             contents: {
@@ -217,12 +217,13 @@ async function sendWelcomeMenu(event) {
                     spacing: "sm",
                     contents: [
                         { type: "separator" },
-                        { type: "spacer", size: "md" },
+                        // ❌ ลบ spacer ออก เพราะอาจทำให้เกิด Error 400
                         {
                             type: "button",
                             style: "primary",
                             color: "#1DB446",
                             height: "sm",
+                            margin: "md", // ✅ ใช้ margin ตรงนี้แทนการใช้ spacer
                             action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
                         },
                         {
@@ -234,14 +235,13 @@ async function sendWelcomeMenu(event) {
                     ]
                 }
             }
-        });
+        };
+
+        return await client.replyMessage(event.replyToken, flexMessage);
+
     } catch (err) {
         console.error("Menu Error:", err);
-        // Fallback: ถ้า Flex Error ให้ส่งข้อความธรรมดาแทน บอทจะได้ไม่เงียบ
-        return client.replyMessage(event.replyToken, { 
-            type: "text", 
-            text: "📝 วิธีใช้:\n1. พิมพ์เลขคิว (เช่น 4012)\n2. ระบบจะแจ้งเตือนเมื่อถึงคิว\n3. พิมพ์ 'ล่าสุด' เพื่อเช็คสถานะ" 
-        });
+        // หมายเหตุ: ไม่ต้องส่งข้อความซ้ำในนี้ เพราะ Token เสียไปแล้วจากการ error รอบแรก
     }
 }
 
@@ -360,4 +360,5 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
+
 
