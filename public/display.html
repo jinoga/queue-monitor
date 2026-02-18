@@ -316,6 +316,70 @@
         .grid-container.cols-1 .queue-number {
             font-size: 12em;
         }
+
+        /* ===== QUEUE ANNOUNCEMENT OVERLAY ===== */
+        .announce-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 10, 30, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .announce-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .announce-overlay.fade-out {
+            opacity: 0;
+        }
+
+        .announce-label {
+            font-size: 2em;
+            color: #8eaad6;
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+        }
+
+        .announce-queue {
+            font-size: 14em;
+            font-weight: 800;
+            color: #00e5ff;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            animation: blink 0.8s ease-in-out infinite;
+            text-shadow: 0 0 60px rgba(0, 229, 255, 0.5), 0 0 120px rgba(0, 229, 255, 0.2);
+        }
+
+        .announce-counter {
+            font-size: 2.5em;
+            color: #ffd740;
+            margin-top: 20px;
+            font-weight: 700;
+            text-shadow: 0 0 20px rgba(255, 215, 64, 0.4);
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
+        }
     </style>
 </head>
 
@@ -326,6 +390,13 @@
             <span><span class="status-dot" id="status-dot"></span><span id="status-text">กำลังเชื่อมต่อ...</span></span>
             <span class="clock" id="clock">--:--:--</span>
         </div>
+    </div>
+
+    <!-- ANNOUNCEMENT OVERLAY -->
+    <div class="announce-overlay" id="announce-overlay">
+        <div class="announce-label">📢 เรียกคิวหมายเลข</div>
+        <div class="announce-queue" id="announce-queue">-</div>
+        <div class="announce-counter" id="announce-counter">ช่องบริการที่ -</div>
     </div>
 
     <div class="grid-container" id="grid">
@@ -344,6 +415,30 @@
             const clockEl = document.getElementById('clock');
 
             let prevCounterQueues = {}; // เก็บ queue เดิมเพื่อเช็คว่ามีการเปลี่ยนแปลงหรือไม่
+            let lastAnnouncedQueue = null; // เก็บคิวล่าสุดที่ประกาศแล้ว
+            let announceTimeout = null;
+
+            const overlay = document.getElementById('announce-overlay');
+            const announceQueueEl = document.getElementById('announce-queue');
+            const announceCounterEl = document.getElementById('announce-counter');
+
+            // แสดง overlay ประกาศคิว 6 วินาที
+            function showAnnouncement(queueNo, counterNo) {
+                announceQueueEl.textContent = queueNo;
+                announceCounterEl.textContent = `ช่องบริการที่ ${counterNo}`;
+                overlay.classList.remove('fade-out');
+                overlay.classList.add('show');
+
+                if (announceTimeout) clearTimeout(announceTimeout);
+
+                // หลัง 5 วิ fade out, รวม 6 วิหายไป
+                announceTimeout = setTimeout(() => {
+                    overlay.classList.add('fade-out');
+                    setTimeout(() => {
+                        overlay.classList.remove('show', 'fade-out');
+                    }, 1000);
+                }, 5000);
+            }
 
             // นาฬิกา
             function updateClock() {
@@ -383,7 +478,8 @@
                     }
 
                     // เช็คสถานะ
-                    const latestTime = new Date(snaps[0].created_at);
+                    const latestSnap = snaps[0];
+                    const latestTime = new Date(latestSnap.created_at);
                     const diffMin = (new Date() - latestTime) / 1000 / 60;
                     if (diffMin < 3) {
                         statusDot.className = 'status-dot online';
@@ -392,6 +488,13 @@
                         statusDot.className = 'status-dot offline';
                         statusText.textContent = 'รอข้อมูล';
                     }
+
+                    // แสดง overlay ถ้าคิวล่าสุดเปลี่ยน
+                    const latestKey = `${latestSnap.current_queue}-${latestSnap.current_counter}`;
+                    if (lastAnnouncedQueue !== null && lastAnnouncedQueue !== latestKey) {
+                        showAnnouncement(latestSnap.current_queue, latestSnap.current_counter);
+                    }
+                    lastAnnouncedQueue = latestKey;
 
                     // จัดกลุ่มตามช่องบริการ
                     const counters = {};
