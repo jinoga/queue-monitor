@@ -121,8 +121,8 @@ async function processViewHistory(event, knownQueue = null) {
         const { data: logs } = await supabase
             .from('queue_snapshots')
             .select('current_queue, current_counter, created_at')
-            .gte('current_queue', seriesStart) 
-            .lt('current_queue', seriesEnd)    
+            .gte('current_queue::integer', seriesStart)
+            .lt('current_queue::integer', seriesEnd)    
             .order('created_at', { ascending: false })
             .limit(10);
 
