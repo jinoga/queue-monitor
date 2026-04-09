@@ -35,34 +35,26 @@ async function handleEvent(event) {
     if (event.type !== 'message' || event.message.type !== 'text') return null;
 
     const userId = event.source.userId;
-    const text = event.message.text.trim(); // ตัดช่องว่างหน้าหลังออก
+    const text = event.message.text.trim();
 
     const isNumberOnly = /^\d+$/.test(text);
     const isTrackCommand = text.startsWith('ติดตามคิว');
 
-    console.log(`User: ${userId} sent: ${text}`); // 📝 ดู Log ใน Vercel ได้
+    console.log(`User: ${userId} sent: ${text}`);
 
-    // 1. สั่งติดตามคิว
     if (isNumberOnly || isTrackCommand) {
         return await processQueueTracking(event, userId, text, isNumberOnly);
-    } 
-    // 2. สั่งยกเลิก
-    else if (text === 'หยุด' || text === 'ยกเลิก') {
+    } else if (text === 'หยุด' || text === 'ยกเลิก') {
         return await processStopTracking(event, userId);
-    } 
-    // 3. ดูประวัติล่าสุด
-    else if (text === 'ล่าสุด' || text === 'ประวัติ' || text === 'สถานะ') {
+    } else if (text === 'ล่าสุด' || text === 'ประวัติ' || text === 'สถานะ') {
         return await processViewHistory(event);
-    }
-    // 4. สั่งดูคู่มือ (เพิ่มตรงนี้ให้ชัดเจน) ✅
-    else if (text === 'คู่มือ' || text === 'เมนู' || text === 'help') {
+    } else if (text === 'คู่มือ' || text === 'เมนู' || text === 'help') {
         return await sendWelcomeMenu(event);
-    } 
-    // 5. พิมพ์อย่างอื่น -> ส่งเมนูเหมือนกัน
-    else {
+    } else {
         return await sendWelcomeMenu(event);
     }
 }
+
 // =======================================================
 // 🧠 BUSINESS LOGIC
 // =======================================================
@@ -75,7 +67,6 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
     }
     const targetQueue = parseInt(queueInput);
 
-    // บันทึกลง DB
     const { error } = await supabase.from('line_trackers').upsert({ 
         user_id: userId, 
         tracking_queue: targetQueue 
@@ -85,7 +76,6 @@ async function processQueueTracking(event, userId, text, isNumberOnly) {
         return client.replyMessage(event.replyToken, { type: 'text', text: "❌ ระบบขัดข้อง กรุณาลองใหม่" });
     }
 
-    // เมื่อเริ่มติดตาม ให้แสดงหน้า "ประวัติ/สถานะ" ทันที เพื่อความสวยงาม
     return await processViewHistory(event, targetQueue); 
 }
 
@@ -96,7 +86,6 @@ async function processViewHistory(event, knownQueue = null) {
     try {
         let myQueue = knownQueue;
 
-        // ถ้าไม่รู้เลขคิว (กรณีพิมพ์ "ล่าสุด" เข้ามาเอง) ให้ไปหาใน DB
         if (!myQueue) {
             const { data: tracker } = await supabase
                 .from('line_trackers')
@@ -113,20 +102,24 @@ async function processViewHistory(event, knownQueue = null) {
             myQueue = parseInt(tracker.tracking_queue);
         }
 
-        // คำนวณหมวดหมู่ (เช่น 4xxx)
-        const istenThousands = myQueue >= 10000;
-        const groupSize = istenThousands ? 10000 : 1000;
+        // ✅ แยก range ตามหลัก: หลักหมื่น (>=10000) ใช้ groupSize 10000, หลักพัน ใช้ 1000
+        const groupSize = myQueue >= 10000 ? 10000 : 1000;
         const seriesStart = Math.floor(myQueue / groupSize) * groupSize;
         const seriesEnd = seriesStart + groupSize;
 
-        // ดึง 10 รายการล่าสุด
-        const { data: logs } = await supabase
+        // ✅ ดึงข้อมูลแบบ broad แล้วกรองใน JS เพื่อป้องกันปัญหา string comparison ใน DB
+        const { data: allLogs } = await supabase
             .from('queue_snapshots')
             .select('current_queue, current_counter, created_at')
-            .gte('current_queue::integer', seriesStart)
-            .lt('current_queue::integer', seriesEnd)    
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(200);
+
+        const logs = (allLogs || [])
+            .filter(log => {
+                const q = parseInt(log.current_queue);
+                return q >= seriesStart && q < seriesEnd;
+            })
+            .slice(0, 10);
 
         if (!logs || logs.length === 0) {
             return client.replyMessage(event.replyToken, { 
@@ -135,7 +128,6 @@ async function processViewHistory(event, knownQueue = null) {
             });
         }
 
-        // สร้าง Flex Message แบบตารางรายการ
         const flexMessage = generateHistoryFlex(myQueue, logs);
         return client.replyMessage(event.replyToken, flexMessage);
 
@@ -151,7 +143,7 @@ async function processStopTracking(event, userId) {
     return client.replyMessage(event.replyToken, { type: 'text', text: '❌ ยกเลิกการติดตามเรียบร้อยแล้ว' });
 }
 
-// 🔹 4. เมนูหลัก (แก้ไขโครงสร้าง Footer)
+// 🔹 4. เมนูหลัก
 async function sendWelcomeMenu(event) {
     try {
         const flexMessage = {
@@ -166,8 +158,6 @@ async function sendWelcomeMenu(event) {
                         { type: "text", text: "วิธีการใช้งาน", weight: "bold", size: "xl", color: "#1DB446", align: "center" },
                         { type: "text", text: "ระบบติดตามคิวที่ดิน จ.นครสวรรค์", weight: "bold", size: "xs", color: "#aaaaaa", align: "center", margin: "xs" },
                         { type: "separator", margin: "md" },
-                        
-                        // ข้อ 1
                         {
                             type: "box", layout: "horizontal", margin: "md",
                             contents: [
@@ -181,8 +171,6 @@ async function sendWelcomeMenu(event) {
                                 }
                             ]
                         },
-                        
-                        // ข้อ 2
                         {
                             type: "box", layout: "horizontal", margin: "md",
                             contents: [
@@ -196,8 +184,6 @@ async function sendWelcomeMenu(event) {
                                 }
                             ]
                         },
-    
-                        // ข้อ 3
                         {
                             type: "box", layout: "horizontal", margin: "md",
                             contents: [
@@ -219,13 +205,12 @@ async function sendWelcomeMenu(event) {
                     spacing: "sm",
                     contents: [
                         { type: "separator" },
-                        // ❌ ลบ spacer ออก เพราะอาจทำให้เกิด Error 400
                         {
                             type: "button",
                             style: "primary",
                             color: "#1DB446",
                             height: "sm",
-                            margin: "md", // ✅ ใช้ margin ตรงนี้แทนการใช้ spacer
+                            margin: "md",
                             action: { type: "message", label: "📋 เช็คคิวล่าสุด", text: "ล่าสุด" }
                         },
                         {
@@ -243,7 +228,6 @@ async function sendWelcomeMenu(event) {
 
     } catch (err) {
         console.error("Menu Error:", err);
-        // หมายเหตุ: ไม่ต้องส่งข้อความซ้ำในนี้ เพราะ Token เสียไปแล้วจากการ error รอบแรก
     }
 }
 
@@ -252,7 +236,6 @@ async function sendWelcomeMenu(event) {
 // =======================================================
 
 function generateHistoryFlex(myQueue, logs) {
-    // คำนวณคิวที่เหลือ (เทียบกับรายการล่าสุดอันบนสุด)
     const latestQueue = parseInt(logs[0].current_queue);
     const diff = myQueue - latestQueue;
     const telegramDeepLink = `https://t.me/NakhonsawanLandBot?start=${myQueue}`; 
@@ -261,25 +244,24 @@ function generateHistoryFlex(myQueue, logs) {
 
     if (diff > 0) {
         headerTitle = `รออีก ${diff} คิว`;
-        headerColor = "#1DB446"; // เขียว
+        headerColor = "#1DB446";
         subTitle = `คิวล่าสุด: ${latestQueue}`;
     } else if (diff === 0) {
         headerTitle = "ถึงคิวแล้ว!";
-        headerColor = "#D93025"; // แดง
+        headerColor = "#D93025";
         subTitle = `เชิญช่อง: ${logs[0].current_counter}`;
     } else {
         headerTitle = "เลยคิวแล้ว";
-        headerColor = "#555555"; // เทา
+        headerColor = "#555555";
         subTitle = `คิวล่าสุดไปที่: ${latestQueue}`;
     }
 
-    // สร้างลิสต์ 10 รายการ
     const listItems = logs.map(log => {
         const time = new Date(log.created_at).toLocaleTimeString('th-TH', { 
             timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit' 
         });
         
-        const isLatest = (log.current_queue === latestQueue);
+        const isLatest = (parseInt(log.current_queue) === latestQueue);
         
         return {
             type: "box",
@@ -301,7 +283,6 @@ function generateHistoryFlex(myQueue, logs) {
         altText: `เหลืออีก ${diff} คิว`,
         contents: {
             type: "bubble",
-            // ส่วน Header: สรุปสถานะ
             header: {
                 type: "box",
                 layout: "vertical",
@@ -314,7 +295,6 @@ function generateHistoryFlex(myQueue, logs) {
                     { type: "text", text: subTitle, size: "sm", color: "#555555", align: "center", margin: "sm" }
                 ]
             },
-            // ส่วน Body: ตารางรายการ
             body: {
                 type: "box",
                 layout: "vertical",
@@ -324,7 +304,6 @@ function generateHistoryFlex(myQueue, logs) {
                     { type: "box", layout: "vertical", margin: "md", contents: listItems }
                 ]
             },
-            // ส่วน Footer: แก้ไขเพิ่มปุ่มคู่มือตรงนี้
             footer: {
                 type: "box",
                 layout: "vertical",
@@ -343,14 +322,12 @@ function generateHistoryFlex(myQueue, logs) {
                         color: "#2481cc",
                         action: { type: "uri", label: "🔔 รับการแจ้งเตือนผ่าน Telegram (สำรอง)", uri: telegramDeepLink }
                     },
-                    // 👇 เพิ่มปุ่มนี้เข้าไปครับ 👇
                     {
                         type: "button",
                         style: "secondary",
                         height: "sm",
                         action: { type: "message", label: "📖 คู่มือการใช้งาน", text: "คู่มือ" }
                     },
-                    // 👆 จบส่วนที่เพิ่ม 👆
                     {
                         type: "button",
                         style: "link",
@@ -362,5 +339,3 @@ function generateHistoryFlex(myQueue, logs) {
         }
     };
 }
-
-
