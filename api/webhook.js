@@ -114,8 +114,10 @@ async function processViewHistory(event, knownQueue = null) {
         }
 
         // คำนวณหมวดหมู่ (เช่น 4xxx)
-        const seriesStart = Math.floor(myQueue / 1000) * 1000;
-        const seriesEnd = seriesStart + 1000;
+        const istenThousands = myQueue >= 10000;
+        const groupSize = istenThousands ? 10000 : 1000;
+        const seriesStart = Math.floor(myQueue / groupSize) * groupSize;
+        const seriesEnd = seriesStart + groupSize;
 
         // ดึง 10 รายการล่าสุด
         const { data: logs } = await supabase
