@@ -247,9 +247,9 @@ function generateHistoryFlex(myQueue, logs) {
         headerColor = "#1DB446";
         subTitle = `คิวล่าสุด: ${latestQueue}`;
     } else if (diff === 0) {
-        headerTitle = "ถึงคิวแล้ว!";
+        headerTitle = "ถึงคิวของท่านแล้ว!";
         headerColor = "#D93025";
-        subTitle = `เชิญช่อง: ${logs[0].current_counter}`;
+        subTitle = `เชิญรับบริการที่ช่อง: ${logs[0].current_counter} ค่ะ`;
     } else {
         headerTitle = "เลยคิวแล้ว";
         headerColor = "#555555";
