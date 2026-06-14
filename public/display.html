@@ -16,7 +16,7 @@
 
         body {
             font-family: 'Prompt', 'Segoe UI', sans-serif;
-            background: #0a0e1a;
+            background: #000000;
             color: #fff;
             height: 100vh;
             width: 100vw;
@@ -27,27 +27,27 @@
 
         /* ===== TOP BAR ===== */
         .top-bar {
-            background: linear-gradient(135deg, #0046ad, #0066e0);
-            padding: 12px 30px;
+            background: #0a0a0a;
+            padding: 6px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
-            box-shadow: 0 4px 20px rgba(0, 70, 173, 0.4);
+            border-bottom: 2px solid #222222;
         }
 
         .top-bar h1 {
-            font-size: 1.4em;
+            font-size: 1.1em;
             font-weight: 700;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            letter-spacing: 0.5px;
+            color: #ffffff;
         }
 
         .top-bar .info {
             display: flex;
             gap: 20px;
             align-items: center;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
 
         .status-dot {
@@ -70,19 +70,12 @@
         }
 
         @keyframes pulse {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.5;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .clock {
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
@@ -90,63 +83,51 @@
         /* ===== GRID ===== */
         .grid-container {
             flex: 1;
-            padding: 20px;
+            padding: 10px;
             display: grid;
-            gap: 20px;
+            gap: 12px;
             overflow: hidden;
         }
 
         /* ===== CARD ===== */
         .card {
-            background: linear-gradient(145deg, #141928, #1a2035);
-            border-radius: 20px;
+            background: #0d0d0d;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid #333333;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
             position: relative;
         }
 
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #0046ad, #00b0ff);
-            border-radius: 20px 20px 0 0;
-        }
-
         .card-header {
-            padding: 12px 20px;
-            background: rgba(0, 70, 173, 0.15);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 8px 12px;
+            background: #141414;
+            border-bottom: 2px solid #222222;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             flex-shrink: 0;
         }
 
         .card-header .counter-icon {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, #0046ad, #0078ff);
-            border-radius: 10px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 1.1em;
-            box-shadow: 0 4px 12px rgba(0, 70, 173, 0.4);
+            font-size: 1em;
+            color: #ffffff;
         }
 
         .card-header .counter-label {
-            font-weight: 600;
-            font-size: 1em;
-            color: #8eaad6;
+            font-weight: 700;
+            font-size: 0.95em;
+            color: #ffffff;
         }
 
         /* ===== CURRENT QUEUE (big number) ===== */
@@ -156,22 +137,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 10px 20px;
+            padding: 8px 12px;
             min-height: 0;
         }
 
         .card-current .label {
-            font-size: 0.8em;
-            color: #5a6a8a;
-            margin-bottom: 4px;
+            font-size: 0.85em;
+            color: #aaaaaa;
+            margin-bottom: 2px;
         }
 
         .card-current .queue-number {
-            font-size: 4.5em;
+            font-size: 5.5em;
             font-weight: 800;
             color: #00e5ff;
             line-height: 1;
-            text-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+            text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
             font-variant-numeric: tabular-nums;
             transition: all 0.5s ease;
         }
@@ -186,53 +167,53 @@
                 text-shadow: 0 0 40px rgba(255, 255, 255, 0.8);
                 transform: scale(1.1);
             }
-
             100% {
                 color: #00e5ff;
-                text-shadow: 0 0 30px rgba(0, 229, 255, 0.3);
+                text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
                 transform: scale(1);
             }
         }
 
         .card-current .time {
-            font-size: 0.75em;
-            color: #4a5a7a;
+            font-size: 0.8em;
+            color: #888888;
             margin-top: 4px;
         }
 
         /* ===== HISTORY ===== */
         .card-history {
-            padding: 10px 16px 14px;
-            background: rgba(0, 0, 0, 0.2);
-            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 12px;
+            background: #050505;
+            border-top: 2px solid #222222;
             flex-shrink: 0;
         }
 
         .card-history .history-title {
-            font-size: 0.65em;
-            color: #4a5a7a;
-            margin-bottom: 6px;
+            font-size: 0.75em;
+            color: #888888;
+            margin-bottom: 4px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 700;
         }
 
         .history-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 3px 0;
-            font-size: 0.78em;
+            padding: 2px 0;
+            font-size: 0.85em;
         }
 
         .history-row .hq {
-            color: #6a7a9a;
-            font-weight: 600;
+            color: #00e5ff;
+            font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
 
         .history-row .ht {
-            color: #3a4a6a;
-            font-size: 0.9em;
+            color: #888888;
+            font-size: 0.95em;
         }
 
         /* ===== NO DATA ===== */
@@ -242,7 +223,7 @@
             justify-content: center;
             height: 100%;
             flex: 1;
-            color: #3a4a6a;
+            color: #888888;
             font-size: 1.2em;
         }
 
@@ -254,7 +235,7 @@
         }
 
         .grid-container.cols-2 .queue-number {
-            font-size: 8em;
+            font-size: 9em;
         }
 
         /* 3 counters */
@@ -264,7 +245,7 @@
         }
 
         .grid-container.cols-3 .queue-number {
-            font-size: 6em;
+            font-size: 7em;
         }
 
         /* 4 counters */
@@ -274,7 +255,7 @@
         }
 
         .grid-container.cols-4 .queue-number {
-            font-size: 5em;
+            font-size: 6em;
         }
 
         /* 5-6 counters */
@@ -284,7 +265,7 @@
         }
 
         .grid-container.cols-6 .queue-number {
-            font-size: 4.5em;
+            font-size: 5.5em;
         }
 
         /* 7-8 counters */
@@ -294,7 +275,7 @@
         }
 
         .grid-container.cols-8 .queue-number {
-            font-size: 3.5em;
+            font-size: 4.5em;
         }
 
         /* 9+ counters */
@@ -304,7 +285,7 @@
         }
 
         .grid-container.cols-9 .queue-number {
-            font-size: 3em;
+            font-size: 4em;
         }
 
         /* 1 counter special */
@@ -314,7 +295,7 @@
         }
 
         .grid-container.cols-1 .queue-number {
-            font-size: 12em;
+            font-size: 13em;
         }
 
         /* ===== QUEUE ANNOUNCEMENT OVERLAY ===== */
