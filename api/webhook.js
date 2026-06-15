@@ -124,7 +124,7 @@ async function processViewHistory(event, knownQueue = null) {
         if (!logs || logs.length === 0) {
             return client.replyMessage(event.replyToken, { 
                 type: 'text', 
-                text: `⏳ ยังไม่มีการเรียกคิวในหมวด ${seriesStart} วันนี้` 
+                text: `⏳ ยังไม่มีการเรียกคิวในหมวด ${seriesStart} วันนี้ หรือไม่เปิดทำการช่องบริการ` 
             });
         }
 
@@ -243,7 +243,7 @@ function generateHistoryFlex(myQueue, logs) {
     let headerTitle = "", headerColor = "#000000", subTitle = "";
 
     if (diff > 0) {
-        headerTitle = `รออีก ${diff} คิว`;
+        headerTitle = `รออีก ${diff} คิว กรุณาเปิดเสียงแจ้งเตือนเพื่อรับการแจ้งเตือนสถานะคิวบริการ`;
         headerColor = "#1DB446";
         subTitle = `คิวล่าสุด: ${latestQueue}`;
     } else if (diff === 0) {
@@ -299,7 +299,7 @@ function generateHistoryFlex(myQueue, logs) {
                 type: "box",
                 layout: "vertical",
                 contents: [
-                    { type: "text", text: "ประวัติการเรียก (หมวดนี้)", weight: "bold", size: "sm", color: "#aaaaaa", margin: "md" },
+                    { type: "text", text: "ประวัติการเรียก (หมวดนี้) กรุณาเปิดเสียงแจ้งเตือน", weight: "bold", size: "sm", color: "#aaaaaa", margin: "md" },
                     { type: "separator", margin: "sm" },
                     { type: "box", layout: "vertical", margin: "md", contents: listItems }
                 ]
