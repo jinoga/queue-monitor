@@ -102,31 +102,31 @@
         }
 
         .card-header {
-            padding: 8px 12px;
+            padding: 10px 14px;
             background: #141414;
             border-bottom: 2px solid #222222;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             flex-shrink: 0;
         }
 
         .card-header .counter-icon {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             background: linear-gradient(135deg, #0046ad, #0078ff);
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 1em;
+            font-size: 1.1em;
             color: #ffffff;
         }
 
         .card-header .counter-label {
             font-weight: 700;
-            font-size: 0.95em;
+            font-size: 1.1em;
             color: #ffffff;
         }
 
@@ -137,22 +137,21 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 8px 12px;
+            padding: 10px;
             min-height: 0;
         }
 
         .card-current .label {
-            font-size: 0.85em;
+            font-size: 1em;
             color: #aaaaaa;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .card-current .queue-number {
-            font-size: 5.5em;
             font-weight: 800;
             color: #00e5ff;
             line-height: 1;
-            text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+            text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
             font-variant-numeric: tabular-nums;
             transition: all 0.5s ease;
         }
@@ -164,20 +163,20 @@
         @keyframes flashNumber {
             0% {
                 color: #fff;
-                text-shadow: 0 0 40px rgba(255, 255, 255, 0.8);
+                text-shadow: 0 0 50px rgba(255, 255, 255, 0.9);
                 transform: scale(1.1);
             }
             100% {
                 color: #00e5ff;
-                text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+                text-shadow: 0 0 20px rgba(0, 229, 255, 0.4);
                 transform: scale(1);
             }
         }
 
         .card-current .time {
-            font-size: 0.8em;
+            font-size: 0.9em;
             color: #888888;
-            margin-top: 4px;
+            margin-top: 8px;
         }
 
         /* ===== NO DATA ===== */
@@ -191,48 +190,48 @@
             font-size: 1.2em;
         }
 
-        /* ===== RESPONSIVE GRID ===== */
+        /* ===== RESPONSIVE GRID (ขยายขนาดตัวเลขให้ใหญ่ขึ้นมาก) ===== */
         .grid-container.cols-2 {
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: 1fr;
         }
-        .grid-container.cols-2 .queue-number { font-size: 9em; }
+        .grid-container.cols-2 .queue-number { font-size: 13em; }
 
         .grid-container.cols-3 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: 1fr;
         }
-        .grid-container.cols-3 .queue-number { font-size: 7em; }
+        .grid-container.cols-3 .queue-number { font-size: 10em; }
 
         .grid-container.cols-4 {
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
-        .grid-container.cols-4 .queue-number { font-size: 6em; }
+        .grid-container.cols-4 .queue-number { font-size: 9em; }
 
         .grid-container.cols-6 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
-        .grid-container.cols-6 .queue-number { font-size: 5.5em; }
+        .grid-container.cols-6 .queue-number { font-size: 8em; }
 
         .grid-container.cols-8 {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
-        .grid-container.cols-8 .queue-number { font-size: 4.5em; }
+        .grid-container.cols-8 .queue-number { font-size: 6.5em; }
 
         .grid-container.cols-9 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
         }
-        .grid-container.cols-9 .queue-number { font-size: 4em; }
+        .grid-container.cols-9 .queue-number { font-size: 6em; }
 
         .grid-container.cols-1 {
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
         }
-        .grid-container.cols-1 .queue-number { font-size: 13em; }
+        .grid-container.cols-1 .queue-number { font-size: 18em; }
 
         /* ===== QUEUE ANNOUNCEMENT OVERLAY ===== */
         .announce-overlay {
@@ -399,7 +398,6 @@
                     }
                     lastAnnouncedQueue = latestKey;
 
-                    // ดึงเฉพาะคิวล่าสุดของแต่ละช่องบริการ
                     const counters = {};
                     snaps.forEach(s => {
                         const c = s.current_counter;
