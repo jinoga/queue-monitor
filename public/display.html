@@ -180,42 +180,6 @@
             margin-top: 4px;
         }
 
-        /* ===== HISTORY ===== */
-        .card-history {
-            padding: 8px 12px;
-            background: #050505;
-            border-top: 2px solid #222222;
-            flex-shrink: 0;
-        }
-
-        .card-history .history-title {
-            font-size: 0.75em;
-            color: #888888;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 700;
-        }
-
-        .history-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2px 0;
-            font-size: 0.85em;
-        }
-
-        .history-row .hq {
-            color: #00e5ff;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-        }
-
-        .history-row .ht {
-            color: #888888;
-            font-size: 0.95em;
-        }
-
         /* ===== NO DATA ===== */
         .no-data {
             display: flex;
@@ -228,75 +192,47 @@
         }
 
         /* ===== RESPONSIVE GRID ===== */
-        /* 1-2 counters */
         .grid-container.cols-2 {
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: 1fr;
         }
+        .grid-container.cols-2 .queue-number { font-size: 9em; }
 
-        .grid-container.cols-2 .queue-number {
-            font-size: 9em;
-        }
-
-        /* 3 counters */
         .grid-container.cols-3 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: 1fr;
         }
+        .grid-container.cols-3 .queue-number { font-size: 7em; }
 
-        .grid-container.cols-3 .queue-number {
-            font-size: 7em;
-        }
-
-        /* 4 counters */
         .grid-container.cols-4 {
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
+        .grid-container.cols-4 .queue-number { font-size: 6em; }
 
-        .grid-container.cols-4 .queue-number {
-            font-size: 6em;
-        }
-
-        /* 5-6 counters */
         .grid-container.cols-6 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
+        .grid-container.cols-6 .queue-number { font-size: 5.5em; }
 
-        .grid-container.cols-6 .queue-number {
-            font-size: 5.5em;
-        }
-
-        /* 7-8 counters */
         .grid-container.cols-8 {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(2, 1fr);
         }
+        .grid-container.cols-8 .queue-number { font-size: 4.5em; }
 
-        .grid-container.cols-8 .queue-number {
-            font-size: 4.5em;
-        }
-
-        /* 9+ counters */
         .grid-container.cols-9 {
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
         }
+        .grid-container.cols-9 .queue-number { font-size: 4em; }
 
-        .grid-container.cols-9 .queue-number {
-            font-size: 4em;
-        }
-
-        /* 1 counter special */
         .grid-container.cols-1 {
             grid-template-columns: 1fr;
             grid-template-rows: 1fr;
         }
-
-        .grid-container.cols-1 .queue-number {
-            font-size: 13em;
-        }
+        .grid-container.cols-1 .queue-number { font-size: 13em; }
 
         /* ===== QUEUE ANNOUNCEMENT OVERLAY ===== */
         .announce-overlay {
@@ -351,15 +287,8 @@
         }
 
         @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.2;
-            }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
         }
     </style>
 </head>
@@ -395,15 +324,14 @@
             const statusText = document.getElementById('status-text');
             const clockEl = document.getElementById('clock');
 
-            let prevCounterQueues = {}; // เก็บ queue เดิมเพื่อเช็คว่ามีการเปลี่ยนแปลงหรือไม่
-            let lastAnnouncedQueue = null; // เก็บคิวล่าสุดที่ประกาศแล้ว
+            let prevCounterQueues = {}; 
+            let lastAnnouncedQueue = null; 
             let announceTimeout = null;
 
             const overlay = document.getElementById('announce-overlay');
             const announceQueueEl = document.getElementById('announce-queue');
             const announceCounterEl = document.getElementById('announce-counter');
 
-            // แสดง overlay ประกาศคิว 6 วินาที
             function showAnnouncement(queueNo, counterNo) {
                 announceQueueEl.textContent = queueNo;
                 announceCounterEl.textContent = `ช่องบริการที่ ${counterNo}`;
@@ -412,7 +340,6 @@
 
                 if (announceTimeout) clearTimeout(announceTimeout);
 
-                // หลัง 5 วิ fade out, รวม 6 วิหายไป
                 announceTimeout = setTimeout(() => {
                     overlay.classList.add('fade-out');
                     setTimeout(() => {
@@ -421,7 +348,6 @@
                 }, 5000);
             }
 
-            // นาฬิกา
             function updateClock() {
                 clockEl.textContent = new Date().toLocaleTimeString('th-TH', {
                     hour: '2-digit', minute: '2-digit', second: '2-digit'
@@ -430,7 +356,6 @@
             setInterval(updateClock, 1000);
             updateClock();
 
-            // เลือก grid layout ตามจำนวนช่อง
             function setGridLayout(count) {
                 grid.className = 'grid-container';
                 if (count <= 1) grid.classList.add('cols-1');
@@ -442,7 +367,6 @@
                 else grid.classList.add('cols-9');
             }
 
-            // อัปเดตข้อมูล
             async function update() {
                 try {
                     const { data: snaps } = await sb
@@ -458,7 +382,6 @@
                         return;
                     }
 
-                    // เช็คสถานะ
                     const latestSnap = snaps[0];
                     const latestTime = new Date(latestSnap.created_at);
                     const diffMin = (new Date() - latestTime) / 1000 / 60;
@@ -470,25 +393,23 @@
                         statusText.textContent = 'รอข้อมูล';
                     }
 
-                    // แสดง overlay ถ้าคิวล่าสุดเปลี่ยน
                     const latestKey = `${latestSnap.current_queue}-${latestSnap.current_counter}`;
                     if (lastAnnouncedQueue !== null && lastAnnouncedQueue !== latestKey) {
                         showAnnouncement(latestSnap.current_queue, latestSnap.current_counter);
                     }
                     lastAnnouncedQueue = latestKey;
 
-                    // จัดกลุ่มตามช่องบริการ
+                    // ดึงเฉพาะคิวล่าสุดของแต่ละช่องบริการ
                     const counters = {};
                     snaps.forEach(s => {
                         const c = s.current_counter;
-                        if (!counters[c]) counters[c] = [];
-                        if (counters[c].length < 6) {
-                            counters[c].push({
+                        if (!counters[c]) {
+                            counters[c] = {
                                 q: s.current_queue,
                                 time: new Date(s.created_at).toLocaleTimeString('th-TH', {
                                     hour: '2-digit', minute: '2-digit'
                                 })
-                            });
+                            };
                         }
                     });
 
@@ -498,27 +419,10 @@
                     grid.innerHTML = '';
 
                     sortedKeys.forEach(cId => {
-                        const data = counters[cId];
-                        const current = data[0];
-                        const history = data.slice(1);
+                        const current = counters[cId];
 
-                        // เช็คว่าคิวเปลี่ยนหรือไม่
                         const changed = prevCounterQueues[cId] !== undefined && prevCounterQueues[cId] !== current.q;
                         prevCounterQueues[cId] = current.q;
-
-                        let historyHTML = '';
-                        if (history.length > 0) {
-                            historyHTML = `
-                            <div class="card-history">
-                                <div class="history-title">คิวก่อนหน้า</div>
-                                ${history.map(h => `
-                                    <div class="history-row">
-                                        <span class="hq">${h.q}</span>
-                                        <span class="ht">${h.time}</span>
-                                    </div>
-                                `).join('')}
-                            </div>`;
-                        }
 
                         grid.innerHTML += `
                         <div class="card">
@@ -531,7 +435,6 @@
                                 <div class="queue-number${changed ? ' flash' : ''}">${current.q}</div>
                                 <div class="time">เมื่อ ${current.time}</div>
                             </div>
-                            ${historyHTML}
                         </div>`;
                     });
 
@@ -542,12 +445,10 @@
                 }
             }
 
-            // Realtime subscription
             sb.channel('display')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'latest_status' }, update)
                 .subscribe();
 
-            // เริ่มต้น + polling
             update();
             setInterval(update, 20000);
         })();
